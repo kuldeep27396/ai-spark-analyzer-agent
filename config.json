@@ -1,0 +1,202 @@
+{
+  "system": {
+    "name": "AI Spark Analyzer",
+    "version": "2.0.0",
+    "environment": "production",
+    "log_level": "INFO",
+    "max_workers": 10,
+    "memory_retention_days": 90
+  },
+  "gcp": {
+    "project_id": "your-gcp-project-id",
+    "region": "us-central1",
+    "credentials_path": "/path/to/service-account.json",
+    "dataproc_cluster_label": "env",
+    "bigquery": {
+      "dataset": "spark_analyzer_memory",
+      "location": "US",
+      "table_expiration_days": 1095
+    },
+    "gcs": {
+      "bucket": "spark-analyzer-reports",
+      "reports_prefix": "reports/"
+    }
+  },
+  "ai": {
+    "model": "gpt-4o",
+    "max_tokens": 4000,
+    "temperature": 0.1,
+    "timeout": 60,
+    "retry_attempts": 3,
+    "retry_delay": 5,
+    "openai_api_key": "your-openai-api-key-here",
+    "langgraph": {
+      "checkpointer": "memory",
+      "recursion_limit": 100,
+      "concurrency": 5,
+      "interrupt_before": ["learning_adaptation"],
+      "enable_state_persistence": true,
+      "enable_adaptive_learning": true
+    }
+  },
+  "email": {
+    "smtp": {
+      "server": "smtp.gmail.com",
+      "port": 587,
+      "use_tls": true,
+      "timeout": 30
+    },
+    "authentication": {
+      "username": "your-email@company.com",
+      "password": "your-app-password",
+      "from_address": "ai-spark-analyzer@company.com"
+    },
+    "recipients": {
+      "admins": ["admin@company.com", "team-leads@company.com"],
+      "notifications": ["devops@company.com", "engineering@company.com"]
+    },
+    "scheduling": {
+      "monthly_summaries": true,
+      "summary_day": 1,
+      "send_time": "09:00"
+    },
+    "templates": {
+      "directory": "./templates/email"
+    }
+  },
+  "analysis": {
+    "daily": {
+      "enabled": true,
+      "hour": 9,
+      "lookback_days": 7,
+      "min_job_duration": 60,
+      "max_jobs_per_cluster": 1000
+    },
+    "monthly": {
+      "enabled": true,
+      "summary_day": 1,
+      "analysis_period_days": 30,
+      "include_trends": true,
+      "include_recommendations": true
+    },
+    "filters": {
+      "job_types": ["spark", "pyspark", "sparkr", "sparksql"],
+      "statuses": ["DONE", "ERROR", "RUNNING"],
+      "min_cpu_usage": 10.0,
+      "min_memory_usage": 15.0
+    },
+    "thresholds": {
+      "cpu_usage": 80.0,
+      "memory_usage": 85.0,
+      "disk_usage": 90.0,
+      "cost_per_hour": 10.0,
+      "failure_rate": 5.0
+    }
+  },
+  "monitoring": {
+    "enabled": true,
+    "health_check_interval": 300,
+    "metrics_retention_days": 30,
+    "alert_cooldown": 900,
+    "prometheus": {
+      "port": 8000,
+      "path": "/metrics"
+    },
+    "slack": {
+      "webhook_url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+      "channel": "#spark-alerts",
+      "username": "AI Spark Analyzer"
+    },
+    "airflow": {
+      "url": "http://localhost:8080",
+      "dag_id": "ai_spark_analyzer_daily",
+      "sla_hours": 2
+    }
+  },
+  "storage": {
+    "bigquery": {
+      "enabled": true,
+      "batch_size": 1000,
+      "retry_attempts": 3,
+      "timeout": 300
+    },
+    "redis": {
+      "enabled": true,
+      "url": "redis://localhost:6379",
+      "ttl": 86400
+    },
+    "vector_db": {
+      "enabled": true,
+      "path": "./data/vector_db",
+      "collection_name": "spark_memory",
+      "dimension": 1536
+    }
+  },
+  "retention": {
+    "days": 365,
+    "cleanup_schedule": "0 2 * * *",
+    "keep_admin_data": true,
+    "keep_metrics": true
+  },
+  "dashboard": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 8080,
+    "debug": false,
+    "secret_key": "your-secret-key-here",
+    "session_timeout": 3600
+  },
+  "agents": {
+    "job_discovery": {
+      "enabled": true,
+      "scan_interval": 1800,
+      "max_jobs_per_scan": 100,
+      "priority_threshold": 0.7
+    },
+    "analysis": {
+      "enabled": true,
+      "concurrent_jobs": 5,
+      "timeout": 600
+    },
+    "monitoring": {
+      "enabled": true,
+      "real_time": true,
+      "prediction_window": 24,
+      "health_scoring": true
+    },
+    "learning": {
+      "enabled": true,
+      "feedback_window": 90,
+      "model_update_threshold": 100,
+      "adaptation_enabled": true
+    },
+    "optimization": {
+      "enabled": true,
+      "cost_threshold": 50.0,
+      "performance_threshold": 20.0,
+      "auto_apply": false
+    }
+  },
+  "api": {
+    "enabled": false,
+    "host": "0.0.0.0",
+    "port": 8001,
+    "rate_limit": 100,
+    "auth_enabled": false
+  },
+  "cost_optimization": {
+    "enabled": true,
+    "targets": {
+      "daily_cost_reduction": 15.0,
+      "monthly_savings_goal": 5000.0,
+      "resource_efficiency": 80.0
+    },
+    "strategies": {
+      "spot_instances": true,
+      "auto_scaling": true,
+      "job_scheduling": true,
+      "resource_rightsizing": true,
+      "code_optimization": true
+    }
+  }
+}
