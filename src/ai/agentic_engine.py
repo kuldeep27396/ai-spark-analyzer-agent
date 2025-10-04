@@ -1,6 +1,8 @@
-"""
-Fully Agentic AI Engine for Autonomous Spark Job Analysis
-Multi-agent system with LangGraph orchestration for dynamic Dataproc job discovery and analysis
+"""A fully agentic AI engine for autonomous Spark job analysis.
+
+This module implements a multi-agent system using LangGraph for orchestration.
+It is designed for the dynamic discovery, analysis, and optimization of
+Dataproc Spark jobs, leveraging specialized AI agents for different tasks.
 """
 
 import asyncio
@@ -28,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class AgentStatus(Enum):
+    """Enumeration for the status of an AI agent."""
     IDLE = "idle"
     BUSY = "busy"
     ERROR = "error"
@@ -36,6 +39,20 @@ class AgentStatus(Enum):
 
 @dataclass
 class AgentTask:
+    """Represents a task to be executed by an AI agent.
+
+    Attributes:
+        task_id: The unique identifier for the task.
+        agent_type: The type of agent required to execute the task.
+        priority: The priority of the task.
+        data: A dictionary of data required for the task.
+        dependencies: A list of task IDs that must be completed before this task.
+        status: The current status of the task.
+        result: A dictionary containing the result of the task.
+        created_at: The timestamp when the task was created.
+        started_at: The timestamp when the task started execution.
+        completed_at: The timestamp when the task was completed.
+    """
     task_id: str
     agent_type: str
     priority: int
@@ -56,7 +73,28 @@ class AgentTask:
 
 @dataclass
 class AgentState(MessagesState):
-    """Enhanced global state for the agentic workflow with LangGraph MessagesState"""
+    """Represents the global state for the agentic workflow.
+
+    This class holds the state that is passed between nodes in the LangGraph
+    workflow. It includes lists of discovered jobs, analysis results, and
+
+    other contextual information.
+
+    Attributes:
+        discovered_jobs: A list of discovered Spark jobs.
+        active_clusters: A list of active Dataproc clusters.
+        job_analysis_results: A dictionary of job analysis results.
+        identified_patterns: A list of identified performance or cost patterns.
+        optimization_recommendations: A list of generated optimization recommendations.
+        agent_tasks: A dictionary of active agent tasks.
+        agent_status: A dictionary of the current status of each agent.
+        workflow_context: A dictionary for general workflow context.
+        memory_updates: A list of updates to be stored in long-term memory.
+        current_phase: The current phase of the workflow.
+        iteration_count: The number of iterations the workflow has run.
+        learning_iterations: The number of learning iterations completed.
+        adaptation_history: A history of adaptations made by the learning agent.
+    """
     discovered_jobs: List[SparkJob] = None
     active_clusters: List[Cluster] = None
     job_analysis_results: Dict[str, Dict] = None
@@ -96,12 +134,32 @@ class AgentState(MessagesState):
 
 
 class AgenticAIEngine:
-    """
-    Fully autonomous AI engine with multi-agent orchestration
-    for dynamic Dataproc Spark job discovery and analysis
+    """A fully autonomous AI engine for Spark job analysis.
+
+    This class orchestrates a multi-agent system for the dynamic discovery,
+    analysis, and optimization of Dataproc Spark jobs. It uses LangGraph
+    to manage the workflow between specialized AI agents.
+
+    Attributes:
+        config: The application's configuration object.
+        llm: An instance of the ChatOpenAI model.
+        dataproc_client: A client for interacting with the Dataproc API.
+        agents: A dictionary of specialized AI agents.
+        workflow: The compiled LangGraph workflow.
+        compiled_workflow: The compiled LangGraph workflow for execution.
+        task_queue: An asyncio queue for managing agent tasks.
+        completed_tasks: A dictionary of completed tasks.
+        agent_performance: A dictionary of agent performance metrics.
+        adaptation_history: A history of adaptations made by the learning agent.
+        learning_metrics: A dictionary of metrics related to the learning system.
     """
 
     def __init__(self, config: Config):
+        """Initializes the AgenticAIEngine.
+
+        Args:
+            config: The application's configuration object.
+        """
         self.config = config
 
         # Initialize LLM with GPT-4o
@@ -143,7 +201,15 @@ class AgenticAIEngine:
         logger.info("Enhanced Agentic AI Engine with GPT-4o initialized successfully")
 
     def _initialize_specialized_agents(self) -> Dict[str, Any]:
-        """Initialize specialized AI agents"""
+        """Initializes all the specialized AI agents.
+
+        This method sets up the prompts and initial status for each agent
+        used in the workflow, such as the Job Discovery Agent, Analysis Agent,
+        and others.
+
+        Returns:
+            A dictionary containing the initialized agents.
+        """
         agents = {}
 
         # Job Discovery Agent
@@ -634,7 +700,14 @@ class AgenticAIEngine:
         return agents
 
     def _create_enhanced_agentic_workflow(self) -> StateGraph:
-        """Create enhanced agentic workflow with advanced LangGraph features"""
+        """Creates the enhanced agentic workflow using LangGraph.
+
+        This method defines the structure of the multi-agent system, including
+        all the nodes (agents) and edges (routing logic) for the workflow.
+
+        Returns:
+            A `StateGraph` object representing the agentic workflow.
+        """
         workflow = StateGraph(AgentState)
 
         # Define agent nodes with enhanced coordination
@@ -768,7 +841,14 @@ class AgenticAIEngine:
         return workflow
 
     def _create_agentic_workflow(self) -> StateGraph:
-        """Create the agentic workflow with dynamic task routing"""
+        """Creates the agentic workflow with dynamic task routing.
+
+        Note: This appears to be an older or alternative version of the workflow
+        creation and may not be the one currently in use.
+
+        Returns:
+            A `StateGraph` object for the agentic workflow.
+        """
         workflow = StateGraph(AgentState)
 
         # Define agent nodes
@@ -833,7 +913,14 @@ class AgenticAIEngine:
         return workflow
 
     async def _job_discovery_node(self, state: AgentState) -> AgentState:
-        """Job discovery agent node"""
+        """The node for the Job Discovery Agent in the workflow.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after the job discovery process.
+        """
         try:
             logger.info("Starting job discovery process")
 
@@ -890,7 +977,14 @@ class AgenticAIEngine:
             return state
 
     async def _workflow_coordination_node(self, state: AgentState) -> AgentState:
-        """Workflow coordination agent node"""
+        """The node for the Workflow Coordination Agent in the workflow.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after workflow coordination.
+        """
         try:
             logger.info("Coordinating workflow execution")
 
@@ -934,7 +1028,14 @@ class AgenticAIEngine:
             return state
 
     async def _multi_job_analysis_node(self, state: AgentState) -> AgentState:
-        """Multi-job analysis agent node"""
+        """The node for the Multi-Job Analysis Agent in the workflow.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after multi-job analysis.
+        """
         try:
             logger.info("Starting multi-job analysis")
 
@@ -969,7 +1070,14 @@ class AgenticAIEngine:
             return state
 
     async def _pattern_recognition_node(self, state: AgentState) -> AgentState:
-        """Pattern recognition agent node"""
+        """The node for the Pattern Recognition Agent in the workflow.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after pattern recognition.
+        """
         try:
             logger.info("Starting pattern recognition")
 
@@ -1010,7 +1118,14 @@ class AgenticAIEngine:
             return state
 
     async def _optimization_strategy_node(self, state: AgentState) -> AgentState:
-        """Optimization strategy agent node"""
+        """The node for the Optimization Strategy Agent in the workflow.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after generating optimization strategies.
+        """
         try:
             logger.info("Generating optimization strategies")
 
@@ -1053,7 +1168,14 @@ class AgenticAIEngine:
             return state
 
     async def _autonomous_monitoring_node(self, state: AgentState) -> AgentState:
-        """Autonomous monitoring agent node"""
+        """The node for the Autonomous Monitoring Agent in the workflow.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after autonomous monitoring.
+        """
         try:
             logger.info("Starting autonomous monitoring")
 
@@ -1086,7 +1208,14 @@ class AgenticAIEngine:
             return state
 
     async def _learning_adaptation_node(self, state: AgentState) -> AgentState:
-        """Learning and adaptation agent node"""
+        """The node for the Learning and Adaptation Agent in the workflow.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after learning and adaptation.
+        """
         try:
             logger.info("Starting learning and adaptation")
 
@@ -1119,7 +1248,14 @@ class AgenticAIEngine:
             return state
 
     async def _update_memory_node(self, state: AgentState) -> AgentState:
-        """Update memory with new insights"""
+        """The node for updating the system's long-term memory.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after updating the memory.
+        """
         try:
             logger.info("Updating memory with new insights")
 
@@ -1144,7 +1280,15 @@ class AgenticAIEngine:
             return state
 
     async def _execute_agent(self, agent_name: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute a specialized agent"""
+        """Executes a specialized agent with the given inputs.
+
+        Args:
+            agent_name: The name of the agent to execute.
+            inputs: A dictionary of inputs for the agent's prompt.
+
+        Returns:
+            A dictionary containing the agent's JSON response.
+        """
         try:
             agent = self.agents[agent_name]
             agent["status"] = AgentStatus.BUSY
@@ -1186,7 +1330,14 @@ class AgenticAIEngine:
             return {"error": str(e)}
 
     def _route_initial_discovery(self, state: AgentState) -> str:
-        """Route initial discovery based on state"""
+        """Determines the initial routing path for the workflow.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            A string representing the next node to execute.
+        """
         if not state.discovered_jobs or len(state.discovered_jobs) == 0:
             return "discover"
         elif state.workflow_context.get("monitoring_required", False):
@@ -1195,7 +1346,14 @@ class AgenticAIEngine:
             return "coordinate"
 
     def _route_after_discovery(self, state: AgentState) -> str:
-        """Route after job discovery"""
+        """Determines the routing path after the job discovery node.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            A string representing the next node to execute.
+        """
         new_jobs = state.workflow_context.get("discovery_results", {}).get("discovery_summary", {}).get("total_new_jobs", 0)
         if new_jobs > 5:
             return "analyze"
@@ -1203,7 +1361,14 @@ class AgenticAIEngine:
             return "coordinate"
 
     def _route_coordination(self, state: AgentState) -> str:
-        """Route based on coordination results"""
+        """Determines the routing path after the coordination node.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            A string representing the next node to execute.
+        """
         high_priority_tasks = [task for task in state.agent_tasks.values() if task.priority >= 8]
         if high_priority_tasks:
             return "analyze"
@@ -1213,7 +1378,14 @@ class AgenticAIEngine:
             return "monitor"
 
     def _route_after_analysis(self, state: AgentState) -> str:
-        """Route after analysis"""
+        """Determines the routing path after the analysis node.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            A string representing the next node to execute.
+        """
         if state.job_analysis_results:
             return "patterns"
         elif state.optimization_recommendations:
@@ -1222,7 +1394,14 @@ class AgenticAIEngine:
             return "monitor"
 
     def _priority_to_number(self, priority_str: str) -> int:
-        """Convert priority string to number"""
+        """Converts a priority string to a numerical value.
+
+        Args:
+            priority_str: The priority as a string (e.g., "critical", "high").
+
+        Returns:
+            The numerical representation of the priority.
+        """
         mapping = {
             "critical": 10,
             "high": 8,
@@ -1232,7 +1411,17 @@ class AgenticAIEngine:
         return mapping.get(priority_str.lower(), 5)
 
     async def run_autonomous_analysis(self, days: int = 7) -> Dict[str, Any]:
-        """Run complete autonomous analysis cycle"""
+        """Runs a complete autonomous analysis cycle.
+
+        This method initializes the workflow and executes it to perform a full
+        analysis of Spark jobs for the specified number of days.
+
+        Args:
+            days: The number of days to analyze.
+
+        Returns:
+            A dictionary containing a summary of the analysis results.
+        """
         try:
             logger.info(f"Starting autonomous analysis for {days} days")
 
@@ -1262,7 +1451,15 @@ class AgenticAIEngine:
             return {"error": str(e), "completed_at": datetime.utcnow().isoformat()}
 
     async def onboard_new_jobs(self, cluster_names: List[str] = None) -> Dict[str, Any]:
-        """Dynamically onboard new jobs from specified clusters"""
+        """Dynamically onboards new jobs from specified clusters.
+
+        Args:
+            cluster_names: A list of cluster names to onboard jobs from. If not
+                           provided, it will scan all clusters.
+
+        Returns:
+            A dictionary containing the results of the onboarding process.
+        """
         try:
             logger.info("Starting dynamic job onboarding")
 
@@ -1324,7 +1521,11 @@ class AgenticAIEngine:
             return {"error": str(e)}
 
     async def get_agent_status(self) -> Dict[str, Any]:
-        """Get current status of all agents"""
+        """Gets the current status of all agents in the system.
+
+        Returns:
+            A dictionary containing the status and performance of each agent.
+        """
         return {
             "agents": {
                 name: {
@@ -1340,7 +1541,17 @@ class AgenticAIEngine:
 
     # Enhanced node implementations with GPT-4o
     async def _enhanced_job_discovery_node(self, state: AgentState) -> AgentState:
-        """Enhanced job discovery node with GPT-4o reasoning"""
+        """An enhanced job discovery node powered by GPT-4o.
+
+        This node uses a more advanced prompt and reasoning to provide a more
+        comprehensive discovery of jobs and their relationships.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after the enhanced discovery process.
+        """
         try:
             logger.info("Starting enhanced job discovery with GPT-4o")
             state.current_phase = "job_discovery"
@@ -1501,7 +1712,17 @@ class AgenticAIEngine:
             return state
 
     async def _enhanced_workflow_coordination_node(self, state: AgentState) -> AgentState:
-        """Enhanced workflow coordination with intelligent task management"""
+        """An enhanced workflow coordination node with intelligent task management.
+
+        This node uses GPT-4o to create a more strategic and adaptive
+        coordination plan for the multi-agent system.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after enhanced coordination.
+        """
         try:
             logger.info("Starting enhanced workflow coordination")
             state.current_phase = "workflow_coordination"
@@ -1627,7 +1848,14 @@ class AgenticAIEngine:
 
     # Enhanced routing functions with intelligent decision making
     def _enhanced_intelligent_routing(self, state: AgentState) -> str:
-        """Enhanced intelligent routing with context awareness"""
+        """An enhanced intelligent routing function with context awareness.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The next node to execute in the workflow.
+        """
         if state.iteration_count == 0:
             return "discover"
 
@@ -1646,7 +1874,14 @@ class AgenticAIEngine:
         return "discover"
 
     def _enhanced_discovery_routing(self, state: AgentState) -> str:
-        """Enhanced routing after discovery"""
+        """An enhanced routing function to be used after the discovery node.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The next node to execute in the workflow.
+        """
         discovery_results = state.workflow_context.get("enhanced_discovery_results", {})
         new_jobs = len(discovery_results.get("discovered_jobs", []))
 
@@ -1662,7 +1897,14 @@ class AgenticAIEngine:
         return "monitor"
 
     def _enhanced_coordination_routing(self, state: AgentState) -> str:
-        """Enhanced routing based on coordination"""
+        """An enhanced routing function to be used after the coordination node.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The next node to execute in the workflow.
+        """
         coordination = state.workflow_context.get("enhanced_coordination", {})
 
         if coordination.get("coordination_strategy", {}).get("primary_focus") == "analysis":
@@ -1681,7 +1923,14 @@ class AgenticAIEngine:
         return "monitor"
 
     def _enhanced_analysis_routing(self, state: AgentState) -> str:
-        """Enhanced routing after analysis"""
+        """An enhanced routing function to be used after the analysis node.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The next node to execute in the workflow.
+        """
         if state.job_analysis_results and len(state.job_analysis_results) > 5:
             return "patterns"
 
@@ -1694,7 +1943,14 @@ class AgenticAIEngine:
         return "coordinate"
 
     def _enhanced_pattern_routing(self, state: AgentState) -> str:
-        """Enhanced routing after pattern recognition"""
+        """An enhanced routing function to be used after the pattern recognition node.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The next node to execute in the workflow.
+        """
         if state.identified_patterns and len(state.identified_patterns) > 3:
             return "optimize"
 
@@ -1704,7 +1960,14 @@ class AgenticAIEngine:
         return "monitor"
 
     def _enhanced_optimization_routing(self, state: AgentState) -> str:
-        """Enhanced routing after optimization"""
+        """An enhanced routing function to be used after the optimization node.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The next node to execute in the workflow.
+        """
         optimization = state.workflow_context.get("optimization_plan", {})
 
         if optimization.get("implementation_required", False):
@@ -1716,7 +1979,14 @@ class AgenticAIEngine:
         return "learn"
 
     def _enhanced_monitoring_routing(self, state: AgentState) -> str:
-        """Enhanced routing after monitoring"""
+        """An enhanced routing function to be used after the monitoring node.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The next node to execute in the workflow.
+        """
         monitoring = state.workflow_context.get("monitoring_status", {})
         critical_alerts = [alert for alert in monitoring.get("alerts", []) if alert.get("severity") == "critical"]
 
@@ -1732,7 +2002,14 @@ class AgenticAIEngine:
         return "monitor"
 
     def _enhanced_memory_routing(self, state: AgentState) -> str:
-        """Enhanced routing after memory update"""
+        """An enhanced routing function to be used after the memory update node.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The next node to execute in the workflow.
+        """
         if state.workflow_context.get("continuous_analysis", False):
             return "discover"
 
@@ -1745,7 +2022,14 @@ class AgenticAIEngine:
         return "coordinate"
 
     def _enhanced_error_recovery_routing(self, state: AgentState) -> str:
-        """Enhanced error recovery routing"""
+        """An enhanced routing function for error recovery.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The next node to execute in the workflow for error recovery.
+        """
         error_context = state.workflow_context.get("error_context", {})
         error_count = state.workflow_context.get("error_count", 0)
 
@@ -1759,32 +2043,39 @@ class AgenticAIEngine:
 
     # Placeholder for enhanced nodes (would implement similar enhancements)
     async def _enhanced_multi_job_analysis_node(self, state: AgentState) -> AgentState:
-        """Enhanced multi-job analysis with GPT-4o"""
+        """Placeholder for the enhanced multi-job analysis node."""
         return await self._multi_job_analysis_node(state)
 
     async def _enhanced_pattern_recognition_node(self, state: AgentState) -> AgentState:
-        """Enhanced pattern recognition with GPT-4o"""
+        """Placeholder for the enhanced pattern recognition node."""
         return await self._pattern_recognition_node(state)
 
     async def _enhanced_optimization_strategy_node(self, state: AgentState) -> AgentState:
-        """Enhanced optimization strategy with GPT-4o"""
+        """Placeholder for the enhanced optimization strategy node."""
         return await self._optimization_strategy_node(state)
 
     async def _enhanced_autonomous_monitoring_node(self, state: AgentState) -> AgentState:
-        """Enhanced autonomous monitoring with GPT-4o"""
+        """Placeholder for the enhanced autonomous monitoring node."""
         return await self._autonomous_monitoring_node(state)
 
     async def _enhanced_learning_adaptation_node(self, state: AgentState) -> AgentState:
-        """Enhanced learning and adaptation with GPT-4o"""
+        """Placeholder for the enhanced learning and adaptation node."""
         state.learning_iterations += 1
         return await self._learning_adaptation_node(state)
 
     async def _enhanced_update_memory_node(self, state: AgentState) -> AgentState:
-        """Enhanced memory update with improved storage"""
+        """Placeholder for the enhanced memory update node."""
         return await self._update_memory_node(state)
 
     async def _error_handler_node(self, state: AgentState) -> AgentState:
-        """Error handling and recovery node"""
+        """The node for handling errors in the workflow.
+
+        Args:
+            state: The current state of the agentic workflow.
+
+        Returns:
+            The updated state after handling the error.
+        """
         logger.error("Error handler activated - analyzing error context")
         state.workflow_context["error_count"] = state.workflow_context.get("error_count", 0) + 1
         state.workflow_context["last_error_time"] = datetime.utcnow().isoformat()

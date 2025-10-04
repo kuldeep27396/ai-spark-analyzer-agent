@@ -1,5 +1,8 @@
-"""
-AI analysis engine using LangGraph for memory management and reasoning
+"""AI analysis engine for Spark jobs.
+
+This module provides an AI-powered engine for analyzing Spark jobs,
+identifying patterns, and generating optimization recommendations. It uses
+LangGraph for managing the analysis workflow and maintaining memory.
 """
 
 import asyncio
@@ -29,16 +32,25 @@ logger = logging.getLogger(__name__)
 
 
 class AIEngine:
-    """
-    AI analysis engine with LangGraph memory management
+    """An AI analysis engine with LangGraph for memory management.
+
+    This class encapsulates the logic for running AI-powered analysis on
+    Spark jobs. It uses a LangGraph `StateGraph` to manage the analysis
+    workflow and maintains a conversation memory for context.
+
+    Attributes:
+        config: The AI configuration settings.
+        llm: An instance of the ChatOpenAI model.
+        prompt_manager: A manager for retrieving and formatting prompts.
+        memory_system: A compiled LangGraph for the memory system.
+        conversation_memory: A buffer for storing conversation history.
     """
 
     def __init__(self, config: AIConfig):
-        """
-        Initialize AI Engine
+        """Initializes the AIEngine.
 
         Args:
-            config: AI configuration
+            config: An `AIConfig` object containing the AI settings.
         """
         self.config = config
 
@@ -65,7 +77,15 @@ class AIEngine:
         logger.info("AI Engine initialized successfully")
 
     def _create_memory_graph(self) -> StateGraph:
-        """Create LangGraph state management graph"""
+        """Creates the LangGraph state management graph.
+
+        This method defines the nodes and edges of the analysis workflow,
+        which includes steps for retrieving from memory, analyzing data,
+        identifying patterns, and generating recommendations.
+
+        Returns:
+            A compiled `StateGraph` for the analysis workflow.
+        """
         # Define state schema
         class AnalysisState:
             def __init__(self):
@@ -102,14 +122,13 @@ class AIEngine:
         return workflow.compile(checkpointer=memory)
 
     async def identify_patterns(self, jobs: List[SparkJob]) -> List[Pattern]:
-        """
-        Identify patterns in Spark job data
+        """Identifies performance and cost patterns in a list of Spark jobs.
 
         Args:
-            jobs: List of Spark jobs to analyze
+            jobs: A list of `SparkJob` objects to analyze.
 
         Returns:
-            List of identified patterns
+            A list of `Pattern` objects representing the identified patterns.
         """
         logger.info(f"Identifying patterns in {len(jobs)} jobs")
 
@@ -156,14 +175,16 @@ class AIEngine:
             return []
 
     async def identify_long_term_patterns(self, jobs: List[SparkJob]) -> List[Pattern]:
-        """
-        Identify long-term patterns across extended time periods
+        """Identifies long-term patterns across extended time periods.
+
+        This method groups jobs by week and month to analyze trends and
+        recurring patterns over time.
 
         Args:
-            jobs: List of Spark jobs spanning multiple weeks/months
+            jobs: A list of `SparkJob` objects spanning multiple weeks or months.
 
         Returns:
-            List of long-term patterns
+            A list of `Pattern` objects representing the long-term patterns.
         """
         logger.info("Analyzing long-term patterns")
 
@@ -191,14 +212,16 @@ class AIEngine:
         return long_term_patterns
 
     async def analyze_cost_optimization(self, jobs: List[SparkJob]) -> CostAnalysis:
-        """
-        Analyze cost optimization opportunities
+        """Analyzes cost optimization opportunities for a list of Spark jobs.
 
         Args:
-            jobs: List of Spark jobs
+            jobs: A list of `SparkJob` objects to analyze for cost.
 
         Returns:
-            Cost analysis results
+            A `CostAnalysis` object with the results of the analysis.
+
+        Raises:
+            Exception: If an error occurs during the cost analysis.
         """
         logger.info("Analyzing cost optimization opportunities")
 
@@ -257,16 +280,15 @@ class AIEngine:
             raise
 
     async def generate_summary_insights(self, jobs: List[SparkJob], patterns: List[Pattern], recommendations: List[Recommendation]) -> str:
-        """
-        Generate executive summary insights
+        """Generates an executive summary of the analysis insights.
 
         Args:
-            jobs: List of analyzed jobs
-            patterns: Identified patterns
-            recommendations: Generated recommendations
+            jobs: A list of the analyzed Spark jobs.
+            patterns: A list of the identified patterns.
+            recommendations: A list of the generated recommendations.
 
         Returns:
-            Executive summary string
+            A string containing the executive summary.
         """
         logger.info("Generating executive summary insights")
 
@@ -299,7 +321,14 @@ class AIEngine:
             return "Analysis completed with insights generation."
 
     async def _execute_analysis_workflow(self, request: AIRequest) -> Dict[str, Any]:
-        """Execute analysis through LangGraph workflow"""
+        """Executes the analysis workflow using the LangGraph memory system.
+
+        Args:
+            request: An `AIRequest` object containing the analysis request.
+
+        Returns:
+            A dictionary containing the results of the workflow execution.
+        """
         try:
             # Initialize state
             initial_state = {
@@ -323,7 +352,14 @@ class AIEngine:
             return {}
 
     async def _retrieve_memory_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Node to retrieve relevant historical context"""
+        """A node in the LangGraph workflow to retrieve relevant historical context.
+
+        Args:
+            state: The current state of the analysis workflow.
+
+        Returns:
+            The updated state with historical context.
+        """
         try:
             # In a real implementation, this would query the memory system
             # For now, simulate memory retrieval
@@ -338,7 +374,14 @@ class AIEngine:
             return state
 
     async def _analyze_data_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Node to analyze current data"""
+        """A node in the LangGraph workflow to analyze the current data.
+
+        Args:
+            state: The current state of the analysis workflow.
+
+        Returns:
+            The updated state with the analysis result.
+        """
         try:
             request = state["analysis_request"]
             current_data = state["current_data"]
@@ -357,7 +400,14 @@ class AIEngine:
             return state
 
     async def _identify_patterns_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Node to identify patterns in data"""
+        """A node in the LangGraph workflow to identify patterns in the data.
+
+        Args:
+            state: The current state of the analysis workflow.
+
+        Returns:
+            The updated state with the identified patterns.
+        """
         try:
             # Use pattern identification logic
             patterns = []  # Would be identified through analysis
@@ -368,7 +418,14 @@ class AIEngine:
             return state
 
     async def _generate_insights_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Node to generate insights"""
+        """A node in the LangGraph workflow to generate insights from the analysis.
+
+        Args:
+            state: The current state of the analysis workflow.
+
+        Returns:
+            The updated state with the generated insights.
+        """
         try:
             insights = []  # Would be generated through analysis
             state["insights"] = insights
@@ -378,7 +435,14 @@ class AIEngine:
             return state
 
     async def _create_recommendations_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Node to create recommendations"""
+        """A node in the LangGraph workflow to create optimization recommendations.
+
+        Args:
+            state: The current state of the analysis workflow.
+
+        Returns:
+            The updated state with the created recommendations.
+        """
         try:
             recommendations = []  # Would be generated through analysis
             state["recommendations"] = recommendations
@@ -388,7 +452,14 @@ class AIEngine:
             return state
 
     async def _update_memory_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Node to update memory with new insights"""
+        """A node in the LangGraph workflow to update the memory with new insights.
+
+        Args:
+            state: The current state of the analysis workflow.
+
+        Returns:
+            The updated state after the memory update.
+        """
         try:
             # In a real implementation, this would update the memory system
             state["memory_updated"] = True
@@ -398,7 +469,15 @@ class AIEngine:
             return state
 
     async def _execute_llm_analysis(self, prompt: str, request: AIRequest) -> Dict[str, Any]:
-        """Execute LLM analysis with the given prompt"""
+        """Executes an LLM analysis with the given prompt.
+
+        Args:
+            prompt: The prompt to send to the LLM.
+            request: The `AIRequest` object for this analysis.
+
+        Returns:
+            A dictionary containing the parsed JSON response from the LLM.
+        """
         try:
             messages = [
                 SystemMessage(content="You are an expert Spark and cloud infrastructure analyst. Provide detailed, actionable analysis in valid JSON format."),
@@ -428,7 +507,14 @@ class AIEngine:
             return {"error": str(e)}
 
     def _prepare_job_summary(self, jobs: List[SparkJob]) -> Dict[str, Any]:
-        """Prepare summary of job data"""
+        """Prepares a summary of job data.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+
+        Returns:
+            A dictionary containing the job summary.
+        """
         total_jobs = len(jobs)
         successful_jobs = [j for j in jobs if j.status == "DONE"]
         failed_jobs = [j for j in jobs if j.status == "ERROR"]
@@ -443,7 +529,16 @@ class AIEngine:
         }
 
     def _extract_performance_metrics(self, jobs: List[SparkJob]) -> Dict[str, Any]:
-        """Extract performance metrics from jobs"""
+        """Extracts performance metrics from a list of jobs.
+
+        Note: This is a placeholder and would be calculated from actual data.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+
+        Returns:
+            A dictionary of performance metrics.
+        """
         return {
             "cpu_utilization": 0.75,  # Placeholder - would be calculated from actual data
             "memory_utilization": 0.80,
@@ -452,7 +547,14 @@ class AIEngine:
         }
 
     def _prepare_cost_data(self, jobs: List[SparkJob]) -> Dict[str, Any]:
-        """Prepare cost data for analysis"""
+        """Prepares cost data for analysis.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+
+        Returns:
+            A dictionary containing cost data.
+        """
         return {
             "total_cost": sum(job.cost_estimate or 0 for job in jobs),
             "cost_per_job": [job.cost_estimate or 0 for job in jobs],
@@ -464,7 +566,14 @@ class AIEngine:
         }
 
     def _analyze_job_costs(self, jobs: List[SparkJob]) -> Dict[str, Any]:
-        """Analyze job costs breakdown"""
+        """Analyzes the cost breakdown of jobs.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+
+        Returns:
+            A dictionary with the cost breakdown.
+        """
         return {
             "job_costs": [{"job_id": job.job_id, "cost": job.cost_estimate or 0} for job in jobs],
             "cost_by_status": {},
@@ -472,21 +581,43 @@ class AIEngine:
         }
 
     def _get_resource_usage_summary(self, jobs: List[SparkJob]) -> Dict[str, Any]:
-        """Get resource usage summary"""
+        """Gets a summary of resource usage.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+
+        Returns:
+            A dictionary with the resource usage summary.
+        """
         return {
             "vcore_usage": sum(job.vcore_seconds or 0 for job in jobs),
             "memory_usage": sum(job.memory_milliseconds or 0 for job in jobs)
         }
 
     def _get_cluster_config_impact(self, jobs: List[SparkJob]) -> Dict[str, Any]:
-        """Analyze cluster configuration impact"""
+        """Analyzes the impact of cluster configuration.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+
+        Returns:
+            A dictionary with the cluster configuration impact analysis.
+        """
         return {
             "cluster_performance": {},
             "configuration_efficiency": 0.8
         }
 
     def _group_jobs_by_week(self, jobs: List[SparkJob]) -> Dict[tuple, List[SparkJob]]:
-        """Group jobs by week"""
+        """Groups jobs by week.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+
+        Returns:
+            A dictionary where keys are week tuples (start_date, end_date)
+            and values are lists of jobs in that week.
+        """
         weekly_jobs = {}
         for job in jobs:
             if job.submit_time:
@@ -500,7 +631,15 @@ class AIEngine:
         return weekly_jobs
 
     def _group_jobs_by_month(self, jobs: List[SparkJob]) -> Dict[tuple, List[SparkJob]]:
-        """Group jobs by month"""
+        """Groups jobs by month.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+
+        Returns:
+            A dictionary where keys are month tuples (start_date, end_date)
+            and values are lists of jobs in that month.
+        """
         monthly_jobs = {}
         for job in jobs:
             if job.submit_time:
@@ -519,7 +658,16 @@ class AIEngine:
         return monthly_jobs
 
     def _prepare_analysis_summary(self, jobs: List[SparkJob], patterns: List[Pattern], recommendations: List[Recommendation]) -> Dict[str, Any]:
-        """Prepare analysis summary for insights generation"""
+        """Prepares an analysis summary for insights generation.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+            patterns: A list of `Pattern` objects.
+            recommendations: A list of `Recommendation` objects.
+
+        Returns:
+            A dictionary with the analysis summary.
+        """
         return {
             "jobs_summary": self._prepare_job_summary(jobs),
             "patterns_count": len(patterns),
@@ -528,7 +676,15 @@ class AIEngine:
         }
 
     def _extract_key_findings(self, jobs: List[SparkJob], patterns: List[Pattern]) -> List[Dict[str, Any]]:
-        """Extract key findings from analysis"""
+        """Extracts key findings from the analysis.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+            patterns: A list of `Pattern` objects.
+
+        Returns:
+            A list of dictionaries, each representing a key finding.
+        """
         findings = []
 
         # Extract findings from patterns
@@ -544,7 +700,14 @@ class AIEngine:
         return findings
 
     def _analyze_performance_trends(self, jobs: List[SparkJob]) -> Dict[str, Any]:
-        """Analyze performance trends"""
+        """Analyzes performance trends.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+
+        Returns:
+            A dictionary of performance trends.
+        """
         return {
             "duration_trend": "stable",
             "success_rate_trend": "improving",
@@ -552,7 +715,14 @@ class AIEngine:
         }
 
     def _analyze_cost_trends(self, jobs: List[SparkJob]) -> Dict[str, Any]:
-        """Analyze cost trends"""
+        """Analyzes cost trends.
+
+        Args:
+            jobs: A list of `SparkJob` objects.
+
+        Returns:
+            A dictionary of cost trends.
+        """
         return {
             "cost_trend": "increasing",
             "cost_per_job_trend": "stable",

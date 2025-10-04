@@ -1,6 +1,9 @@
-"""
-Multi-Cluster Management System
-Centralized management of multiple Dataproc clusters with intelligent orchestration
+"""A multi-cluster management system for Dataproc.
+
+This module provides a centralized system for managing multiple Dataproc
+clusters with intelligent orchestration. It handles health checks, policy
+enforcement, cost optimization, and resource allocation across a fleet of
+clusters.
 """
 
 import asyncio
@@ -23,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class ClusterStatus(Enum):
+    """Enumeration for the status of a managed cluster."""
     ACTIVE = "active"
     MAINTENANCE = "maintenance"
     DEGRADED = "degraded"
@@ -31,6 +35,7 @@ class ClusterStatus(Enum):
 
 
 class ClusterType(Enum):
+    """Enumeration for the type of a cluster (e.g., production, staging)."""
     PRODUCTION = "production"
     STAGING = "staging"
     DEVELOPMENT = "development"
@@ -39,6 +44,21 @@ class ClusterType(Enum):
 
 @dataclass
 class ClusterMetrics:
+    """Represents the performance and cost metrics for a single cluster.
+
+    Attributes:
+        cluster_name: The name of the cluster.
+        cpu_utilization: The average CPU utilization percentage.
+        memory_utilization: The average memory utilization percentage.
+        disk_utilization: The average disk utilization percentage.
+        active_jobs: The number of currently active jobs.
+        queued_jobs: The number of queued jobs.
+        failed_jobs: The number of failed jobs.
+        total_jobs: The total number of jobs on the cluster.
+        cost_per_hour: The estimated cost per hour in USD.
+        efficiency_score: A calculated efficiency score for the cluster.
+        last_updated: The timestamp when the metrics were last updated.
+    """
     cluster_name: str
     cpu_utilization: float
     memory_utilization: float
@@ -54,6 +74,20 @@ class ClusterMetrics:
 
 @dataclass
 class ClusterPolicy:
+    """Represents a management policy for clusters.
+
+    Attributes:
+        policy_id: The unique identifier for the policy.
+        policy_name: The name of the policy.
+        cluster_types: A list of cluster types this policy applies to.
+        conditions: A dictionary of conditions that trigger the policy.
+        actions: A list of actions to take when the policy is triggered.
+        priority: The priority of the policy.
+        enabled: A boolean indicating if the policy is enabled.
+        created_at: The timestamp when the policy was created.
+        last_applied: The timestamp when the policy was last applied.
+        application_count: The number of times the policy has been applied.
+    """
     policy_id: str
     policy_name: str
     cluster_types: List[ClusterType]
@@ -68,6 +102,17 @@ class ClusterPolicy:
 
 @dataclass
 class ClusterGroup:
+    """Represents a group of clusters that can be managed together.
+
+    Attributes:
+        group_id: The unique identifier for the group.
+        group_name: The name of the group.
+        cluster_names: A list of cluster names in this group.
+        group_type: The type of group (e.g., "region", "environment").
+        policies: A list of policy IDs that apply to this group.
+        load_balancing_strategy: The load balancing strategy for the group.
+        created_at: The timestamp when the group was created.
+    """
     group_id: str
     group_name: str
     cluster_names: List[str]
@@ -78,11 +123,34 @@ class ClusterGroup:
 
 
 class MultiClusterManager:
-    """
-    Multi-cluster management system with intelligent orchestration
+    """Manages the lifecycle and optimization of multiple Dataproc clusters.
+
+    This class provides intelligent orchestration for discovering, monitoring,
+    and applying policies to a fleet of Dataproc clusters to ensure
+    optimal performance and cost efficiency.
+
+    Attributes:
+        config: The application's configuration object.
+        ai_engine: An instance of the AgenticAIEngine for AI-driven analysis.
+        dataproc_client: A client for interacting with the Dataproc API.
+        clusters: A dictionary of managed clusters.
+        cluster_metrics: A dictionary of metrics for each cluster.
+        cluster_groups: A dictionary of cluster groups.
+        cluster_policies: A dictionary of cluster management policies.
+        cluster_jobs: A dictionary mapping clusters to their jobs.
+        job_discovery: An instance of the JobDiscoveryManager.
+        monitoring_system: An instance of the AutonomousMonitoringSystem.
+        management_config: A dictionary of management configuration parameters.
+        management_stats: A dictionary of statistics about the management process.
     """
 
     def __init__(self, config: Config, ai_engine: AgenticAIEngine):
+        """Initializes the MultiClusterManager.
+
+        Args:
+            config: The application's configuration object.
+            ai_engine: An instance of the AgenticAIEngine.
+        """
         self.config = config
         self.ai_engine = ai_engine
         self.dataproc_client = DataprocClient(config)
@@ -126,7 +194,7 @@ class MultiClusterManager:
         logger.info("Multi-Cluster Manager initialized")
 
     def _initialize_default_policies(self):
-        """Initialize default cluster management policies"""
+        """Initializes a set of default cluster management policies."""
         default_policies = [
             {
                 "policy_id": "auto_scale_high_cpu",
@@ -184,7 +252,12 @@ class MultiClusterManager:
             self.cluster_policies[policy.policy_id] = policy
 
     async def start_management(self):
-        """Start multi-cluster management"""
+        """Starts the continuous multi-cluster management loop.
+
+        This method starts the subsystems for job discovery and monitoring,
+        and then enters a loop to execute management cycles at a configured
+        interval.
+        """
         logger.info("Starting multi-cluster management")
 
         # Start subsystems
@@ -201,7 +274,11 @@ class MultiClusterManager:
                 await asyncio.sleep(60)
 
     async def _management_cycle(self):
-        """Execute one management cycle"""
+        """Executes a single management cycle.
+
+        This cycle includes updating the cluster inventory, collecting metrics,
+        evaluating health, applying policies, and optimizing resources.
+        """
         logger.debug("Starting management cycle")
 
         # 1. Discover and update clusters
@@ -231,7 +308,11 @@ class MultiClusterManager:
         self.management_stats["last_health_check"] = datetime.utcnow()
 
     async def _update_cluster_inventory(self):
-        """Update cluster inventory"""
+        """Updates the inventory of managed clusters.
+
+        This method discovers new clusters, updates the status of existing
+        ones, and removes clusters that no longer exist.
+        """
         try:
             discovered_clusters = await self.dataproc_client.list_clusters()
 
@@ -261,7 +342,11 @@ class MultiClusterManager:
             logger.error(f"Error updating cluster inventory: {e}")
 
     async def _setup_cluster_monitoring(self, cluster: Cluster):
-        """Setup monitoring for a new cluster"""
+        """Sets up monitoring for a newly discovered cluster.
+
+        Args:
+            cluster: The `Cluster` object for the new cluster.
+        """
         try:
             # Start job discovery for this cluster
             discovery_result = await self.job_discovery.manual_discovery([cluster.cluster_name])
@@ -271,7 +356,7 @@ class MultiClusterManager:
             logger.error(f"Error setting up monitoring for cluster {cluster.cluster_name}: {e}")
 
     async def _collect_cluster_metrics(self):
-        """Collect metrics for all clusters"""
+        """Collects performance and cost metrics for all managed clusters."""
         for cluster_name, cluster in self.clusters.items():
             try:
                 if cluster.status in ["RUNNING", "ACTIVE"]:
@@ -283,7 +368,16 @@ class MultiClusterManager:
                 logger.error(f"Error collecting metrics for cluster {cluster_name}: {e}")
 
     async def _collect_single_cluster_metrics(self, cluster_name: str) -> Optional[ClusterMetrics]:
-        """Collect metrics for a single cluster"""
+        """Collects metrics for a single cluster.
+
+        Note: This is a simulation and does not collect real metrics.
+
+        Args:
+            cluster_name: The name of the cluster to collect metrics for.
+
+        Returns:
+            A `ClusterMetrics` object with the simulated metrics, or `None`.
+        """
         try:
             # In a real implementation, this would collect actual metrics from the cluster
             # For now, simulate metrics
@@ -308,7 +402,7 @@ class MultiClusterManager:
             return None
 
     async def _evaluate_cluster_health(self):
-        """Evaluate health of all clusters"""
+        """Evaluates the health of all managed clusters based on their metrics."""
         for cluster_name, metrics in self.cluster_metrics.items():
             try:
                 health_score = self._calculate_cluster_health_score(metrics)
@@ -334,7 +428,14 @@ class MultiClusterManager:
                 logger.error(f"Error evaluating health for cluster {cluster_name}: {e}")
 
     def _calculate_cluster_health_score(self, metrics: ClusterMetrics) -> float:
-        """Calculate health score for a cluster"""
+        """Calculates a health score for a cluster based on its metrics.
+
+        Args:
+            metrics: A `ClusterMetrics` object for the cluster.
+
+        Returns:
+            A health score between 0.0 and 1.0.
+        """
         score = 100.0
 
         # CPU utilization impact
@@ -372,7 +473,13 @@ class MultiClusterManager:
         return max(score, 0.0) / 100.0
 
     async def _handle_cluster_status_change(self, cluster_name: str, old_status: str, new_status: str):
-        """Handle cluster status change"""
+        """Handles the change in a cluster's status.
+
+        Args:
+            cluster_name: The name of the cluster whose status changed.
+            old_status: The previous status of the cluster.
+            new_status: The new status of the cluster.
+        """
         try:
             if new_status == ClusterStatus.OFFLINE.value:
                 # Handle cluster going offline
@@ -391,7 +498,11 @@ class MultiClusterManager:
             logger.error(f"Error handling status change for cluster {cluster_name}: {e}")
 
     async def _handle_cluster_offline(self, cluster_name: str):
-        """Handle cluster going offline"""
+        """Handles the procedures for when a cluster goes offline.
+
+        Args:
+            cluster_name: The name of the offline cluster.
+        """
         logger.warning(f"Cluster {cluster_name} is offline, initiating failover procedures")
 
         # Reschedule jobs to other clusters
@@ -401,14 +512,22 @@ class MultiClusterManager:
                 await self._reschedule_job(job, cluster_name)
 
     async def _handle_cluster_degraded(self, cluster_name: str):
-        """Handle degraded cluster performance"""
+        """Handles the procedures for when a cluster's performance is degraded.
+
+        Args:
+            cluster_name: The name of the degraded cluster.
+        """
         logger.info(f"Cluster {cluster_name} is degraded, applying optimization measures")
 
         # Apply performance optimization policies
         await self._apply_cluster_specific_policies(cluster_name, "performance")
 
     async def _handle_cluster_recovery(self, cluster_name: str):
-        """Handle cluster recovery"""
+        """Handles the procedures for when a cluster recovers.
+
+        Args:
+            cluster_name: The name of the recovered cluster.
+        """
         logger.info(f"Cluster {cluster_name} has recovered")
 
         # Restart any failed jobs
@@ -417,7 +536,7 @@ class MultiClusterManager:
             await self._restart_job(job)
 
     async def _apply_cluster_policies(self):
-        """Apply cluster management policies"""
+        """Applies the defined management policies to all applicable clusters."""
         for policy_id, policy in self.cluster_policies.items():
             if not policy.enabled:
                 continue
@@ -435,7 +554,14 @@ class MultiClusterManager:
                 logger.error(f"Error applying policy {policy_id}: {e}")
 
     async def _get_clusters_for_policy(self, policy: ClusterPolicy) -> List[str]:
-        """Get clusters that match policy criteria"""
+        """Gets a list of clusters that are applicable for a given policy.
+
+        Args:
+            policy: The `ClusterPolicy` to evaluate.
+
+        Returns:
+            A list of cluster names that are applicable for the policy.
+        """
         applicable_clusters = []
 
         for cluster_name, cluster in self.clusters.items():
@@ -447,7 +573,14 @@ class MultiClusterManager:
         return applicable_clusters
 
     def _determine_cluster_type(self, cluster: Cluster) -> ClusterType:
-        """Determine cluster type based on cluster properties"""
+        """Determines the type of a cluster based on its properties.
+
+        Args:
+            cluster: The `Cluster` object.
+
+        Returns:
+            The determined `ClusterType`.
+        """
         cluster_name_lower = cluster.cluster_name.lower()
 
         if "prod" in cluster_name_lower or "production" in cluster_name_lower:
@@ -462,7 +595,15 @@ class MultiClusterManager:
             return ClusterType.DEVELOPMENT  # Default
 
     async def _evaluate_policy_conditions(self, cluster_name: str, conditions: Dict[str, Any]) -> bool:
-        """Evaluate if policy conditions are met for a cluster"""
+        """Evaluates if the conditions of a policy are met for a cluster.
+
+        Args:
+            cluster_name: The name of the cluster to evaluate.
+            conditions: A dictionary of conditions from the policy.
+
+        Returns:
+            `True` if all conditions are met, `False` otherwise.
+        """
         metrics = self.cluster_metrics.get(cluster_name)
         if not metrics:
             return False
@@ -497,7 +638,15 @@ class MultiClusterManager:
             return False
 
     def _evaluate_numeric_condition(self, actual_value: float, condition: str) -> bool:
-        """Evaluate a numeric condition"""
+        """Evaluates a numeric condition string (e.g., "> 80").
+
+        Args:
+            actual_value: The actual value of the metric.
+            condition: The condition string to evaluate.
+
+        Returns:
+            `True` if the condition is met, `False` otherwise.
+        """
         try:
             if ">" in condition:
                 threshold = float(condition.split(">")[1].strip())
@@ -519,7 +668,14 @@ class MultiClusterManager:
         return False
 
     def _evaluate_time_condition(self, condition: str) -> bool:
-        """Evaluate a time-based condition"""
+        """Evaluates a time-based condition string (e.g., "maintenance").
+
+        Args:
+            condition: The time condition to evaluate.
+
+        Returns:
+            `True` if the current time meets the condition, `False` otherwise.
+        """
         current_hour = datetime.utcnow().hour
 
         if condition == "maintenance":
@@ -532,7 +688,12 @@ class MultiClusterManager:
         return False
 
     async def _execute_policy_actions(self, cluster_name: str, policy: ClusterPolicy):
-        """Execute policy actions for a cluster"""
+        """Executes the actions defined in a policy for a specific cluster.
+
+        Args:
+            cluster_name: The name of the cluster to execute actions on.
+            policy: The `ClusterPolicy` to execute.
+        """
         try:
             for action in policy.actions:
                 logger.info(f"Executing action '{action}' for cluster {cluster_name} based on policy {policy.policy_name}")
@@ -560,7 +721,12 @@ class MultiClusterManager:
             logger.error(f"Error executing policy actions for cluster {cluster_name}: {e}")
 
     async def _scale_cluster_workers(self, cluster_name: str, direction: str):
-        """Scale cluster workers up or down"""
+        """Scales the number of worker nodes in a cluster up or down.
+
+        Args:
+            cluster_name: The name of the cluster to scale.
+            direction: The direction to scale ("up" or "down").
+        """
         try:
             # In a real implementation, this would call the Dataproc API
             logger.info(f"Scaling {direction} workers for cluster {cluster_name}")
@@ -570,35 +736,56 @@ class MultiClusterManager:
             logger.error(f"Error scaling cluster {cluster_name}: {e}")
 
     async def _enable_spot_instances(self, cluster_name: str):
-        """Enable spot instances for cost optimization"""
+        """Enables the use of spot instances for a cluster to optimize costs.
+
+        Args:
+            cluster_name: The name of the cluster.
+        """
         try:
             logger.info(f"Enabling spot instances for cluster {cluster_name}")
         except Exception as e:
             logger.error(f"Error enabling spot instances for cluster {cluster_name}: {e}")
 
     async def _rightsize_cluster(self, cluster_name: str):
-        """Rightsize cluster based on current workload"""
+        """Adjusts the size and machine types of a cluster based on its workload.
+
+        Args:
+            cluster_name: The name of the cluster to rightsize.
+        """
         try:
             logger.info(f"Rightsizing cluster {cluster_name}")
         except Exception as e:
             logger.error(f"Error rightsizing cluster {cluster_name}: {e}")
 
     async def _schedule_cluster_shutdown(self, cluster_name: str):
-        """Schedule cluster shutdown for cost savings"""
+        """Schedules a cluster to be shut down to save costs.
+
+        Args:
+            cluster_name: The name of the cluster to shut down.
+        """
         try:
             logger.info(f"Scheduling shutdown for cluster {cluster_name}")
         except Exception as e:
             logger.error(f"Error scheduling shutdown for cluster {cluster_name}: {e}")
 
     async def _notify_admins(self, cluster_name: str, policy_name: str):
-        """Notify administrators about policy actions"""
+        """Notifies administrators about a policy action being taken on a cluster.
+
+        Args:
+            cluster_name: The name of the affected cluster.
+            policy_name: The name of the policy that was triggered.
+        """
         try:
             logger.info(f"Notifying admins about policy '{policy_name}' for cluster {cluster_name}")
         except Exception as e:
             logger.error(f"Error notifying admins: {e}")
 
     async def _restart_failed_jobs(self, cluster_name: str):
-        """Restart failed jobs on a cluster"""
+        """Restarts failed jobs on a specific cluster.
+
+        Args:
+            cluster_name: The name of the cluster.
+        """
         try:
             failed_jobs = [job for job in self.cluster_jobs.get(cluster_name, []) if job.status == "ERROR"]
             for job in failed_jobs:
@@ -607,21 +794,29 @@ class MultiClusterManager:
             logger.error(f"Error restarting failed jobs on cluster {cluster_name}: {e}")
 
     async def _escalate_alert(self, cluster_name: str):
-        """Escalate alerts for a cluster"""
+        """Escalates an alert for a specific cluster.
+
+        Args:
+            cluster_name: The name of the cluster.
+        """
         try:
             logger.warning(f"Escalating alerts for cluster {cluster_name}")
         except Exception as e:
             logger.error(f"Error escalating alerts for cluster {cluster_name}: {e}")
 
     async def _optimize_cluster_costs(self, cluster_name: str):
-        """Optimize costs for a cluster"""
+        """Triggers cost optimization actions for a specific cluster.
+
+        Args:
+            cluster_name: The name of the cluster to optimize.
+        """
         try:
             logger.info(f"Optimizing costs for cluster {cluster_name}")
         except Exception as e:
             logger.error(f"Error optimizing costs for cluster {cluster_name}: {e}")
 
     async def _optimize_resource_allocation(self):
-        """Optimize resource allocation across clusters"""
+        """Optimizes resource allocation across all managed clusters."""
         try:
             # Analyze resource utilization across all clusters
             total_cpu = sum(m.cpu_utilization for m in self.cluster_metrics.values())
@@ -648,7 +843,12 @@ class MultiClusterManager:
             logger.error(f"Error optimizing resource allocation: {e}")
 
     async def _suggest_load_balancing(self, overutilized: List[str], underutilized: List[str]):
-        """Suggest load balancing between clusters"""
+        """Suggests load balancing actions between over- and under-utilized clusters.
+
+        Args:
+            overutilized: A list of names of over-utilized clusters.
+            underutilized: A list of names of under-utilized clusters.
+        """
         try:
             for over_cluster in overutilized:
                 for under_cluster in underutilized:
@@ -659,7 +859,7 @@ class MultiClusterManager:
             logger.error(f"Error suggesting load balancing: {e}")
 
     async def _perform_cost_optimization(self):
-        """Perform cost optimization across all clusters"""
+        """Performs cost optimization checks across all clusters."""
         try:
             for cluster_name, metrics in self.cluster_metrics.items():
                 # Check for cost optimization opportunities
@@ -670,14 +870,24 @@ class MultiClusterManager:
             logger.error(f"Error performing cost optimization: {e}")
 
     async def _apply_cluster_specific_policies(self, cluster_name: str, policy_type: str):
-        """Apply cluster-specific policies"""
+        """Applies policies of a specific type (e.g., "cost") to a cluster.
+
+        Args:
+            cluster_name: The name of the cluster.
+            policy_type: The type of policy to apply.
+        """
         for policy_id, policy in self.cluster_policies.items():
             if policy_type in policy.policy_name.lower():
                 if await self._evaluate_policy_conditions(cluster_name, policy.conditions):
                     await self._execute_policy_actions(cluster_name, policy)
 
     async def _reschedule_job(self, job: SparkJob, original_cluster: str):
-        """Reschedule a job to another cluster"""
+        """Reschedules a job from one cluster to another.
+
+        Args:
+            job: The `SparkJob` to reschedule.
+            original_cluster: The name of the original cluster.
+        """
         try:
             # Find suitable cluster for rescheduling
             suitable_clusters = [
@@ -696,7 +906,11 @@ class MultiClusterManager:
             logger.error(f"Error rescheduling job {job.job_id}: {e}")
 
     async def _restart_job(self, job: SparkJob):
-        """Restart a failed job"""
+        """Restarts a failed job.
+
+        Args:
+            job: The `SparkJob` to restart.
+        """
         try:
             logger.info(f"Restarting job {job.job_id}")
             # In a real implementation, this would restart the job
@@ -704,7 +918,7 @@ class MultiClusterManager:
             logger.error(f"Error restarting job {job.job_id}: {e}")
 
     def _update_management_stats(self):
-        """Update management statistics"""
+        """Updates the management statistics."""
         self.management_stats["total_clusters"] = len(self.clusters)
         self.management_stats["active_clusters"] = len([
             c for c in self.clusters.values() if c.status in ["RUNNING", "ACTIVE"]
@@ -712,7 +926,11 @@ class MultiClusterManager:
         self.management_stats["total_jobs"] = sum(len(jobs) for jobs in self.cluster_jobs.values())
 
     async def get_cluster_status(self) -> Dict[str, Any]:
-        """Get overall cluster status"""
+        """Gets the overall status of all managed clusters.
+
+        Returns:
+            A dictionary containing the overall status and metrics.
+        """
         return {
             "management_stats": {
                 **self.management_stats,
@@ -745,7 +963,14 @@ class MultiClusterManager:
         }
 
     async def add_cluster_group(self, group_data: Dict[str, Any]) -> str:
-        """Add a new cluster group"""
+        """Adds a new group of clusters for collective management.
+
+        Args:
+            group_data: A dictionary containing the data for the new group.
+
+        Returns:
+            The ID of the newly created group.
+        """
         group = ClusterGroup(
             group_id=group_data.get("group_id", f"group_{datetime.utcnow().isoformat()}"),
             group_name=group_data["group_name"],
@@ -761,7 +986,11 @@ class MultiClusterManager:
         return group.group_id
 
     def get_cluster_recommendations(self) -> List[Dict[str, Any]]:
-        """Get cluster optimization recommendations"""
+        """Gets a list of optimization recommendations for all clusters.
+
+        Returns:
+            A list of dictionaries, each representing a recommendation.
+        """
         recommendations = []
 
         for cluster_name, metrics in self.cluster_metrics.items():

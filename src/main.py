@@ -1,6 +1,9 @@
-"""
-Main entry point for Agentic AI Spark Analyzer
-Fully autonomous multi-agent system for Dataproc Spark job analysis and optimization
+"""Main entry point for the AI Spark Analyzer.
+
+This module provides a command-line interface for the AI Spark Analyzer,
+a fully autonomous multi-agent system for Dataproc Spark job analysis and optimization.
+It allows running the system in different modes, such as autonomous analysis,
+continuous monitoring, and dashboard visualization.
 """
 
 import asyncio
@@ -34,7 +37,21 @@ running = True
 
 
 async def run_autonomous_analysis(days: int = 7):
-    """Run fully autonomous analysis with agentic AI"""
+    """Runs a fully autonomous analysis of Spark jobs.
+
+    This function initializes the Agentic AI Engine and Multi-Cluster Manager,
+    then triggers an autonomous analysis for a specified number of days.
+    It prints a summary of the analysis results upon completion.
+
+    Args:
+        days: The number of past days to analyze.
+
+    Returns:
+        A dictionary containing the analysis results.
+
+    Raises:
+        Exception: If an error occurs during the analysis.
+    """
     logger.info(f"Starting autonomous analysis for {days} days")
 
     try:
@@ -71,7 +88,15 @@ async def run_autonomous_analysis(days: int = 7):
 
 
 async def run_continuous_autonomous_mode():
-    """Run continuous autonomous monitoring and analysis"""
+    """Runs the system in continuous autonomous monitoring and analysis mode.
+
+    This function initializes the core components and starts a continuous loop
+    for monitoring and managing Spark jobs. It includes a graceful shutdown
+    mechanism to handle termination signals.
+
+    Raises:
+        Exception: If an error occurs during continuous operation.
+    """
     logger.info("🚀 Starting continuous autonomous mode")
 
     try:
@@ -118,7 +143,22 @@ async def run_continuous_autonomous_mode():
 
 
 async def run_job_onboarding(cluster_names: list = None):
-    """Dynamically onboard new jobs from clusters"""
+    """Dynamically onboards new jobs from specified clusters.
+
+    This function initializes the Agentic AI Engine and triggers the job
+    onboarding process for a given list of clusters. It prints a summary
+    of the onboarding results.
+
+    Args:
+        cluster_names: A list of cluster names to onboard jobs from.
+                       If None, it may default to pre-configured clusters.
+
+    Returns:
+        A dictionary containing the onboarding results.
+
+    Raises:
+        Exception: If an error occurs during job onboarding.
+    """
     logger.info("Starting dynamic job onboarding")
 
     try:
@@ -153,7 +193,18 @@ async def run_job_onboarding(cluster_names: list = None):
 
 
 async def run_agent_status():
-    """Get status of all AI agents"""
+    """Retrieves and displays the status of all AI agents.
+
+    This function initializes the Agentic AI Engine and fetches the current
+    status of each agent, including their health, tasks completed, and
+    performance metrics.
+
+    Returns:
+        A dictionary containing the status of all agents.
+
+    Raises:
+        Exception: If an error occurs while fetching agent status.
+    """
     logger.info("Getting agent status")
 
     try:
@@ -188,7 +239,18 @@ async def run_agent_status():
 
 
 async def run_discovery_status():
-    """Get job discovery status"""
+    """Retrieves and displays the status of the job discovery system.
+
+    This function initializes the Job Discovery Manager and fetches its
+    current status, including discovery statistics, cluster information,
+    and job processing queues.
+
+    Returns:
+        A dictionary containing the discovery system status.
+
+    Raises:
+        Exception: If an error occurs while fetching discovery status.
+    """
     logger.info("Getting discovery status")
 
     try:
@@ -229,7 +291,18 @@ async def run_discovery_status():
 
 
 async def run_learning_status():
-    """Get learning system status"""
+    """Retrieves and displays the status of the self-learning system.
+
+    This function initializes the Self-Learning System and fetches its
+    current status, including learning statistics, model performance,
+    and accuracy metrics.
+
+    Returns:
+        A dictionary containing the learning system status.
+
+    Raises:
+        Exception: If an error occurs while fetching learning status.
+    """
     logger.info("Getting learning system status")
 
     try:
@@ -278,7 +351,18 @@ async def run_learning_status():
 
 
 async def run_cluster_status():
-    """Get multi-cluster management status"""
+    """Retrieves and displays the status of the multi-cluster management system.
+
+    This function initializes the Multi-Cluster Manager and fetches its
+    current status, including management statistics, cluster inventory,
+    and performance metrics.
+
+    Returns:
+        A dictionary containing the cluster management status.
+
+    Raises:
+        Exception: If an error occurs while fetching cluster status.
+    """
     logger.info("Getting cluster status")
 
     try:
@@ -331,7 +415,20 @@ async def run_cluster_status():
 
 
 async def add_feedback(feedback_data: dict):
-    """Add feedback to the learning system"""
+    """Adds feedback to the self-learning system.
+
+    This function initializes the Self-Learning System and submits new
+    feedback data, which is used to improve the system's models.
+
+    Args:
+        feedback_data: A dictionary containing the feedback information.
+
+    Returns:
+        The ID of the newly added feedback.
+
+    Raises:
+        Exception: If an error occurs while adding feedback.
+    """
     logger.info("Adding feedback to learning system")
 
     try:
@@ -349,7 +446,15 @@ async def add_feedback(feedback_data: dict):
 
 
 def run_dashboard(host: str = None, port: int = None):
-    """Run the dashboard application"""
+    """Runs the web-based dashboard application.
+
+    This function starts a Flask-based web server to provide a
+    dashboard for monitoring the AI Spark Analyzer.
+
+    Args:
+        host: The hostname to bind the dashboard server to.
+        port: The port to run the dashboard server on.
+    """
     host = host or config.dashboard.host
     port = port or config.dashboard.port
 
@@ -364,7 +469,15 @@ def run_dashboard(host: str = None, port: int = None):
 
 
 async def run_cleanup(retention_days: int = None):
-    """Clean up old data"""
+    """Cleans up old data from the system.
+
+    This function removes historical data, logs, and other artifacts
+    older than a specified number of days to manage storage.
+
+    Args:
+        retention_days: The number of days to retain data. Data older
+                        than this will be removed.
+    """
     retention_days = retention_days or config.analysis.memory_retention_days
     logger.info(f"Cleaning up data older than {retention_days} days")
 
@@ -381,7 +494,14 @@ async def run_cleanup(retention_days: int = None):
 
 
 def main():
-    """Main entry point for Agentic AI Spark Analyzer"""
+    """Main entry point for the AI Spark Analyzer command-line interface.
+
+    This function parses command-line arguments and executes the selected
+    mode of operation for the AI Spark Analyzer.
+
+    Returns:
+        An exit code, 0 for success and non-zero for failure.
+    """
     parser = argparse.ArgumentParser(
         description="🤖 Agentic AI Spark Analyzer - Autonomous multi-agent system for Dataproc optimization"
     )
