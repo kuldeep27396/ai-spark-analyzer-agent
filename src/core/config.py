@@ -1,5 +1,9 @@
-"""
-Configuration management for AI Spark Analyzer
+"""Configuration management for the AI Spark Analyzer.
+
+This module defines the configuration structure for the application using
+Pydantic's BaseSettings. It allows loading settings from environment
+variables, a .env file, and a JSON configuration file, providing a
+centralized and type-safe way to manage application settings.
 """
 
 import os
@@ -10,7 +14,18 @@ from pydantic_settings import BaseSettings
 
 
 class GoogleCloudConfig(BaseSettings):
-    """Google Cloud configuration settings"""
+    """Defines Google Cloud Platform (GCP) configuration settings.
+
+    Attributes:
+        project_id: The GCP project ID.
+        region: The Dataproc region.
+        credentials_path: The path to the GCP service account credentials file.
+        dataproc_cluster_label: The label used to identify Dataproc clusters.
+        bigquery_dataset: The BigQuery dataset for storing memory and analysis results.
+        bigquery_location: The location of the BigQuery dataset.
+        gcs_bucket: The GCS bucket for storing reports.
+        gcs_reports_prefix: The prefix for report objects in the GCS bucket.
+    """
 
     project_id: str = Field(..., env="GOOGLE_CLOUD_PROJECT")
     region: str = Field("us-central1", env="DATAPROC_REGION")
@@ -30,7 +45,20 @@ class GoogleCloudConfig(BaseSettings):
 
 
 class AIConfig(BaseSettings):
-    """AI and ML configuration settings"""
+    """Defines AI and Machine Learning (ML) configuration settings.
+
+    Attributes:
+        openai_api_key: The API key for OpenAI services.
+        model: The model to use for AI-powered analysis (e.g., "gpt-4o").
+        temperature: The sampling temperature for the AI model.
+        max_tokens: The maximum number of tokens for AI model responses.
+        timeout: The timeout for AI API requests in seconds.
+        retry_attempts: The number of retry attempts for failed AI API requests.
+        retry_delay: The delay between retry attempts in seconds.
+        langgraph_api_key: The API key for LangGraph services.
+        langgraph: A dictionary for LangGraph-specific settings.
+        memory_retention_days: The number of days to retain AI memory.
+    """
 
     openai_api_key: str = Field(..., env="OPENAI_API_KEY")
     model: str = Field("gpt-4o", env="OPENAI_MODEL")
@@ -50,7 +78,14 @@ class AIConfig(BaseSettings):
 
 
 class DatabaseConfig(BaseSettings):
-    """Database configuration settings"""
+    """Defines database configuration settings.
+
+    Attributes:
+        database_url: The URL for the primary relational database (e.g., PostgreSQL).
+        redis_url: The URL for the Redis cache.
+        vector_db_path: The file path for the local vector database.
+        vector_collection_name: The name of the collection in the vector database.
+    """
 
     database_url: str = Field("postgresql://localhost/spark_analyzer", env="DATABASE_URL")
     redis_url: str = Field("redis://localhost:6379", env="REDIS_URL")
@@ -64,7 +99,21 @@ class DatabaseConfig(BaseSettings):
 
 
 class EmailConfig(BaseSettings):
-    """Email configuration for notifications and summaries"""
+    """Defines email configuration for notifications and summaries.
+
+    Attributes:
+        smtp_server: The SMTP server hostname.
+        smtp_port: The SMTP server port.
+        use_tls: Whether to use TLS for the SMTP connection.
+        username: The username for SMTP authentication.
+        password: The password for SMTP authentication.
+        from_email: The email address to send notifications from.
+        admin_emails: A list of email addresses for admin notifications.
+        notification_emails: A list of email addresses for general notifications.
+        send_monthly_summaries: Whether to send monthly summary emails.
+        monthly_summary_day: The day of the month to send summaries.
+        email_template_dir: The directory containing email templates.
+    """
 
     # SMTP configuration
     smtp_server: str = Field("smtp.gmail.com", env="SMTP_SERVER")
@@ -92,7 +141,15 @@ class EmailConfig(BaseSettings):
 
 
 class MonitoringConfig(BaseSettings):
-    """Monitoring and alerting configuration"""
+    """Defines monitoring and alerting configuration.
+
+    Attributes:
+        prometheus_port: The port for the Prometheus metrics endpoint.
+        slack_webhook_url: The webhook URL for Slack notifications.
+        slack_channel: The Slack channel for sending alerts.
+        airflow_url: The URL for the Airflow webserver.
+        airflow_dag_id: The ID of the Airflow DAG for the analyzer.
+    """
 
     prometheus_port: int = Field(8000, env="PROMETHEUS_PORT")
 
@@ -109,7 +166,19 @@ class MonitoringConfig(BaseSettings):
 
 
 class AnalysisConfig(BaseSettings):
-    """Analysis configuration settings"""
+    """Defines analysis configuration settings.
+
+    Attributes:
+        daily_analysis_hour: The hour of the day to run daily analysis.
+        recommendation_frequency_days: The frequency in days for generating new recommendations.
+        min_job_duration_seconds: The minimum duration for a job to be analyzed.
+        failed_jobs_analysis: Whether to analyze failed Spark jobs.
+        cost_analysis_enabled: Whether to enable cost analysis features.
+        currency: The currency for cost analysis (eg., "USD").
+        cpu_usage_threshold: The CPU usage threshold for performance alerts.
+        memory_usage_threshold: The memory usage threshold for performance alerts.
+        disk_usage_threshold: The disk usage threshold for performance alerts.
+    """
 
     # Analysis frequency
     daily_analysis_hour: int = Field(9, env="DAILY_ANALYSIS_HOUR")
@@ -133,7 +202,14 @@ class AnalysisConfig(BaseSettings):
 
 
 class DashboardConfig(BaseSettings):
-    """Dashboard configuration settings"""
+    """Defines dashboard configuration settings.
+
+    Attributes:
+        host: The hostname to bind the dashboard server to.
+        port: The port to run the dashboard server on.
+        debug: Whether to run the dashboard in debug mode.
+        secret_key: The secret key for the dashboard application.
+    """
 
     host: str = Field("0.0.0.0", env="DASHBOARD_HOST")
     port: int = Field(8080, env="DASHBOARD_PORT")
@@ -145,7 +221,38 @@ class DashboardConfig(BaseSettings):
 
 
 class Config(BaseSettings):
-    """Main configuration class"""
+    """The main configuration class for the AI Spark Analyzer.
+
+    This class aggregates all other configuration classes and provides
+    a single point of access for all settings. It also loads additional
+    configuration from a JSON file and ensures necessary directories exist.
+
+    Attributes:
+        environment: The application environment (e.g., "development", "production").
+        log_level: The logging level (e.g., "INFO", "DEBUG").
+        name: The name of the system.
+        version: The version of the system.
+        max_workers: The maximum number of worker threads for concurrent tasks.
+        google_cloud: The Google Cloud Platform configuration.
+        gcp: An alias for the Google Cloud Platform configuration.
+        ai: The AI and ML configuration.
+        database: The database configuration.
+        email: The email configuration.
+        monitoring: The monitoring configuration.
+        analysis: The analysis configuration.
+        dashboard: The dashboard configuration.
+        gcp_config: Additional GCP settings from the JSON file.
+        analysis_config: Additional analysis settings from the JSON file.
+        monitoring_config: Additional monitoring settings from the JSON file.
+        storage_config: Additional storage settings from the JSON file.
+        retention_config: Additional retention settings from the JSON file.
+        agents_config: Additional agents settings from the JSON file.
+        api_config: Additional API settings from the JSON file.
+        cost_optimization_config: Additional cost optimization settings from the JSON file.
+        data_dir: The base directory for data files.
+        log_dir: The directory for log files.
+        output_dir: The directory for output files.
+    """
 
     # Environment
     environment: str = Field("development", env="ENVIRONMENT")
@@ -185,7 +292,12 @@ class Config(BaseSettings):
         self._ensure_directories()
 
     def _load_json_config(self):
-        """Load configuration from JSON file"""
+        """Loads configuration settings from a `config.json` file.
+
+        This method reads the JSON configuration file, if it exists, and
+        updates the application's settings with the values found. This
+        allows for easy customization without changing environment variables.
+        """
         config_path = os.path.join(os.path.dirname(__file__), "../../config.json")
         if os.path.exists(config_path):
             try:
@@ -241,7 +353,11 @@ class Config(BaseSettings):
                 print(f"⚠️  Error loading JSON config: {e}")
 
     def _ensure_directories(self):
-        """Ensure required directories exist"""
+        """Ensures that all required data and log directories exist.
+
+        This method checks for the existence of directories specified in the
+        configuration and creates them if they are missing.
+        """
         directories = [
             self.data_dir,
             self.log_dir,

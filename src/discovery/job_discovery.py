@@ -1,6 +1,9 @@
-"""
-Dynamic Job Discovery and Onboarding System
-Autonomous discovery and onboarding of Dataproc Spark jobs across multiple clusters
+"""Dynamic job discovery and onboarding system.
+
+This module provides an autonomous system for discovering and onboarding
+Dataproc Spark jobs across multiple clusters. It identifies new jobs,
+prioritizes them based on various heuristics, and queues them for
+further analysis and optimization.
 """
 
 import asyncio
@@ -20,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class JobType(Enum):
+    """Enumeration for the different types of Spark jobs."""
     BATCH = "batch"
     STREAMING = "streaming"
     INTERACTIVE = "interactive"
@@ -28,6 +32,7 @@ class JobType(Enum):
 
 
 class OnboardingStatus(Enum):
+    """Enumeration for the status of a job in the onboarding process."""
     PENDING = "pending"
     DISCOVERED = "discovered"
     ANALYZING = "analyzing"
@@ -38,6 +43,20 @@ class OnboardingStatus(Enum):
 
 @dataclass
 class JobDiscoveryResult:
+    """Data class representing the result of a job discovery.
+
+    Attributes:
+        job_id: The unique identifier for the job.
+        cluster_name: The name of the cluster where the job was discovered.
+        job_name: The name of the Spark job.
+        job_type: The classified type of the job.
+        discovery_timestamp: The time when the job was discovered.
+        onboarding_status: The current onboarding status of the job.
+        priority_score: The calculated priority score for onboarding.
+        business_impact: The assessed business impact of the job.
+        resource_profile: A dictionary of the job's resource profile.
+        metadata: A dictionary of additional job metadata.
+    """
     job_id: str
     cluster_name: str
     job_name: str
@@ -52,6 +71,18 @@ class JobDiscoveryResult:
 
 @dataclass
 class ClusterProfile:
+    """Data class for storing the profile of a discovered cluster.
+
+    Attributes:
+        cluster_name: The name of the cluster.
+        cluster_type: The type of the cluster.
+        region: The region where the cluster is located.
+        status: The current status of the cluster.
+        job_count: The number of jobs discovered on the cluster.
+        last_discovery: The timestamp of the last discovery on this cluster.
+        discovery_patterns: A dictionary of discovery patterns for the cluster.
+        onboarding_history: A list of job IDs that have been onboarded from this cluster.
+    """
     cluster_name: str
     cluster_type: str
     region: str
@@ -63,11 +94,31 @@ class ClusterProfile:
 
 
 class JobDiscoveryManager:
-    """
-    Dynamic job discovery manager for autonomous Dataproc job onboarding
+    """Manages the dynamic discovery and onboarding of Dataproc jobs.
+
+    This class is responsible for continuously scanning Dataproc clusters,
+    discovering new jobs, classifying and prioritizing them, and managing
+    the onboarding process for further analysis.
+
+    Attributes:
+        config: The application's configuration object.
+        ai_engine: An instance of the AgenticAIEngine for AI-driven analysis.
+        dataproc_client: A client for interacting with the Dataproc API.
+        discovered_clusters: A dictionary of discovered cluster profiles.
+        discovered_jobs: A dictionary of discovered job results.
+        onboarding_queue: An asyncio queue for jobs pending onboarding.
+        processing_jobs: A set of job IDs currently being processed.
+        discovery_config: A dictionary of discovery configuration parameters.
+        discovery_stats: A dictionary of statistics about the discovery process.
     """
 
     def __init__(self, config: Config, ai_engine: AgenticAIEngine):
+        """Initializes the JobDiscoveryManager.
+
+        Args:
+            config: The application's configuration object.
+            ai_engine: An instance of the AgenticAIEngine.
+        """
         self.config = config
         self.ai_engine = ai_engine
         self.dataproc_client = DataprocClient(config)
@@ -100,7 +151,11 @@ class JobDiscoveryManager:
         logger.info("Job Discovery Manager initialized")
 
     async def start_continuous_discovery(self):
-        """Start continuous job discovery process"""
+        """Starts the continuous job discovery process.
+
+        This method runs an infinite loop that periodically executes a
+        discovery cycle to find and onboard new jobs.
+        """
         logger.info("Starting continuous job discovery")
 
         while True:
@@ -112,7 +167,11 @@ class JobDiscoveryManager:
                 await asyncio.sleep(60)  # Wait before retrying
 
     async def _discovery_cycle(self):
-        """Execute one discovery cycle"""
+        """Executes a single discovery cycle.
+
+        This cycle includes discovering clusters, finding jobs, prioritizing
+        them, and processing the onboarding queue.
+        """
         logger.info("Starting discovery cycle")
 
         # 1. Discover clusters
@@ -133,7 +192,11 @@ class JobDiscoveryManager:
         logger.info(f"Discovery cycle completed. Jobs discovered: {len(self.discovered_jobs)}")
 
     async def _discover_clusters(self):
-        """Discover and profile Dataproc clusters"""
+        """Discovers and profiles active Dataproc clusters.
+
+        This method fetches a list of clusters from the Dataproc API and
+        creates or updates a profile for each discovered cluster.
+        """
         try:
             clusters = await self.dataproc_client.list_clusters()
 
@@ -160,13 +223,17 @@ class JobDiscoveryManager:
             logger.error(f"Error discovering clusters: {e}")
 
     async def _discover_jobs_from_clusters(self):
-        """Discover jobs from all monitored clusters"""
+        """Discovers jobs from all monitored clusters."""
         for cluster_name, cluster_profile in self.discovered_clusters.items():
             if cluster_profile.status in ["RUNNING", "ACTIVE"]:
                 await self._discover_cluster_jobs(cluster_name)
 
     async def _discover_cluster_jobs(self, cluster_name: str):
-        """Discover jobs from a specific cluster"""
+        """Discovers jobs from a specific cluster.
+
+        Args:
+            cluster_name: The name of the cluster to discover jobs from.
+        """
         try:
             logger.info(f"Discovering jobs from cluster: {cluster_name}")
 
@@ -197,7 +264,15 @@ class JobDiscoveryManager:
             logger.error(f"Error discovering jobs from cluster {cluster_name}: {e}")
 
     async def _create_job_discovery_result(self, job_data: Dict[str, Any], cluster_name: str) -> Optional[JobDiscoveryResult]:
-        """Create job discovery result from raw job data"""
+        """Creates a `JobDiscoveryResult` from raw job data.
+
+        Args:
+            job_data: A dictionary of raw data for a single job.
+            cluster_name: The name of the cluster where the job was found.
+
+        Returns:
+            A `JobDiscoveryResult` object, or `None` if an error occurs.
+        """
         try:
             # Determine job type
             job_type = self._classify_job_type(job_data)
@@ -232,7 +307,14 @@ class JobDiscoveryManager:
             return None
 
     def _classify_job_type(self, job_data: Dict[str, Any]) -> JobType:
-        """Classify job type based on job characteristics"""
+        """Classifies the type of a job based on its characteristics.
+
+        Args:
+            job_data: A dictionary of raw data for a single job.
+
+        Returns:
+            The classified `JobType`.
+        """
         job_name = job_data.get("job_name", "").lower()
         job_type = job_data.get("type", "").lower()
 
@@ -255,7 +337,15 @@ class JobDiscoveryManager:
         return JobType.BATCH
 
     def _calculate_priority_score(self, job_data: Dict[str, Any], job_type: JobType) -> float:
-        """Calculate priority score for job onboarding"""
+        """Calculates a priority score for a job to determine its onboarding order.
+
+        Args:
+            job_data: A dictionary of raw data for a single job.
+            job_type: The classified type of the job.
+
+        Returns:
+            A priority score between 0.0 and 1.0.
+        """
         score = 0.5  # Base score
 
         # Job type weighting
@@ -290,7 +380,15 @@ class JobDiscoveryManager:
         return min(score, 1.0)
 
     def _assess_business_impact(self, job_data: Dict[str, Any], priority_score: float) -> str:
-        """Assess business impact of the job"""
+        """Assesses the business impact of a job based on its priority score.
+
+        Args:
+            job_data: A dictionary of raw data for a single job.
+            priority_score: The calculated priority score of the job.
+
+        Returns:
+            A string representing the business impact (e.g., "critical", "high").
+        """
         if priority_score >= 0.8:
             return "critical"
         elif priority_score >= 0.6:
@@ -301,7 +399,14 @@ class JobDiscoveryManager:
             return "low"
 
     def _create_resource_profile(self, job_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Create resource usage profile"""
+        """Creates a resource usage profile for a job.
+
+        Args:
+            job_data: A dictionary of raw data for a single job.
+
+        Returns:
+            A dictionary representing the job's resource profile.
+        """
         resource_usage = job_data.get("resource_usage", {})
 
         return {
@@ -315,7 +420,14 @@ class JobDiscoveryManager:
         }
 
     def _calculate_resource_efficiency(self, resource_usage: Dict[str, Any]) -> str:
-        """Calculate resource efficiency rating"""
+        """Calculates a resource efficiency rating for a job.
+
+        Args:
+            resource_usage: A dictionary of the job's resource usage.
+
+        Returns:
+            A string rating for resource efficiency (e.g., "excellent", "poor").
+        """
         # Simple efficiency calculation based on resource utilization
         cpu_util = resource_usage.get("cpu_utilization", 0.5)
         memory_util = resource_usage.get("memory_utilization", 0.5)
@@ -332,7 +444,14 @@ class JobDiscoveryManager:
             return "poor"
 
     def _extract_job_metadata(self, job_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Extract relevant metadata from job data"""
+        """Extracts relevant metadata from raw job data.
+
+        Args:
+            job_data: A dictionary of raw data for a single job.
+
+        Returns:
+            A dictionary of extracted metadata.
+        """
         return {
             "submit_time": job_data.get("submit_time"),
             "user": job_data.get("user", "unknown"),
@@ -347,7 +466,7 @@ class JobDiscoveryManager:
         }
 
     async def _prioritize_and_queue_jobs(self):
-        """Prioritize discovered jobs and add to onboarding queue"""
+        """Prioritizes discovered jobs and adds them to the onboarding queue."""
         # Filter jobs that need onboarding
         pending_jobs = [
             job for job in self.discovered_jobs.values()
@@ -368,7 +487,7 @@ class JobDiscoveryManager:
                 logger.info(f"Queued job for onboarding: {job.job_name} (priority: {job.priority_score:.2f})")
 
     async def _process_onboarding_queue(self):
-        """Process jobs in the onboarding queue"""
+        """Processes jobs in the onboarding queue concurrently."""
         max_concurrent = 5  # Process up to 5 jobs concurrently
         processing_tasks = []
 
@@ -382,7 +501,11 @@ class JobDiscoveryManager:
             await asyncio.gather(*processing_tasks, return_exceptions=True)
 
     async def _onboard_job(self, job: JobDiscoveryResult):
-        """Onboard a single job"""
+        """Onboards a single job by running it through the AI engine for analysis.
+
+        Args:
+            job: The `JobDiscoveryResult` object for the job to be onboarded.
+        """
         try:
             logger.info(f"Onboarding job: {job.job_name}")
 
@@ -425,7 +548,14 @@ class JobDiscoveryManager:
             self.processing_jobs.discard(job.job_id)
 
     def _priority_score_to_priority(self, score: float) -> str:
-        """Convert priority score to priority string"""
+        """Converts a numerical priority score to a priority string.
+
+        Args:
+            score: The priority score.
+
+        Returns:
+            A string representing the priority level.
+        """
         if score >= 0.8:
             return "critical"
         elif score >= 0.6:
@@ -436,7 +566,7 @@ class JobDiscoveryManager:
             return "low"
 
     def _update_discovery_stats(self):
-        """Update discovery statistics"""
+        """Updates the discovery statistics."""
         self.discovery_stats["last_scan"] = datetime.utcnow()
         self.discovery_stats["clusters_monitored"] = len(self.discovered_clusters)
         self.discovery_stats["jobs_pending_onboarding"] = len([
@@ -445,7 +575,15 @@ class JobDiscoveryManager:
         ])
 
     async def manual_discovery(self, cluster_names: List[str] = None) -> Dict[str, Any]:
-        """Manually trigger discovery for specific clusters"""
+        """Manually triggers a discovery cycle for specific clusters.
+
+        Args:
+            cluster_names: A list of cluster names to run discovery on.
+                           If `None`, discovery runs on all clusters.
+
+        Returns:
+            A dictionary containing the results of the manual discovery.
+        """
         logger.info("Starting manual job discovery")
 
         if cluster_names is None:
@@ -482,7 +620,12 @@ class JobDiscoveryManager:
         }
 
     async def get_discovery_status(self) -> Dict[str, Any]:
-        """Get current discovery status"""
+        """Gets the current status of the job discovery system.
+
+        Returns:
+            A dictionary containing the current discovery statistics,
+            cluster and job statuses, and queue information.
+        """
         return {
             "discovery_stats": {
                 **self.discovery_stats,
@@ -524,12 +667,23 @@ class JobDiscoveryManager:
         }
 
     def configure_discovery(self, config: Dict[str, Any]):
-        """Configure discovery parameters"""
+        """Configures the discovery parameters.
+
+        Args:
+            config: A dictionary of configuration parameters to update.
+        """
         self.discovery_config.update(config)
         logger.info(f"Discovery configuration updated: {config}")
 
     def get_high_priority_jobs(self, limit: int = 10) -> List[JobDiscoveryResult]:
-        """Get high priority jobs for immediate attention"""
+        """Gets a list of high-priority jobs that require immediate attention.
+
+        Args:
+            limit: The maximum number of jobs to return.
+
+        Returns:
+            A list of `JobDiscoveryResult` objects for high-priority jobs.
+        """
         return sorted(
             [job for job in self.discovered_jobs.values()
              if job.onboarding_status in [OnboardingStatus.DISCOVERED, OnboardingStatus.ANALYZING]],

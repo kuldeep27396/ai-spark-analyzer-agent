@@ -1,8 +1,10 @@
-"""
-Dataproc integration module for AI Spark Analyzer
+"""Initializes the Dataproc module.
+
+This module provides the necessary tools for interacting with Google Cloud
+Dataproc. It exposes the `DataprocClient` for easy access to Dataproc jobs
+and cluster information.
 """
 
 from .client import DataprocClient
-from .monitoring import DataprocMonitor
 
-__all__ = ["DataprocClient", "DataprocMonitor"]
+__all__ = ["DataprocClient"]

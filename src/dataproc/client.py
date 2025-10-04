@@ -1,5 +1,9 @@
-"""
-Dataproc client for interacting with Google Cloud Dataproc
+"""Client for interacting with the Google Cloud Dataproc API.
+
+This module provides a client class for listing Dataproc jobs and clusters,
+retrieving job metrics, and estimating costs. It simplifies the interaction
+with the `google-cloud-dataproc` library and formats the results into
+the application's data models.
 """
 
 import asyncio
@@ -24,16 +28,26 @@ logger = logging.getLogger(__name__)
 
 
 class DataprocClient:
-    """
-    Client for interacting with Google Cloud Dataproc API
+    """A client for interacting with the Google Cloud Dataproc API.
+
+    This class wraps the `google-cloud-dataproc` and `google-cloud-monitoring`
+    clients to provide methods for fetching and managing Dataproc resources
+    like jobs and clusters.
+
+    Attributes:
+        config: The Google Cloud configuration settings.
+        job_client: A `dataproc_v1.JobControllerClient` instance.
+        cluster_client: A `dataproc_v1.ClusterControllerClient` instance.
+        monitoring_client: A `monitoring_v3.MetricServiceClient` instance.
+        project_path: The full path string for the GCP project.
+        region_path: The full path string for the Dataproc region.
     """
 
     def __init__(self, config: GoogleCloudConfig):
-        """
-        Initialize Dataproc client
+        """Initializes the DataprocClient.
 
         Args:
-            config: Google Cloud configuration
+            config: A `GoogleCloudConfig` object containing the GCP settings.
         """
         self.config = config
 
@@ -64,14 +78,20 @@ class DataprocClient:
         logger.info(f"Dataproc client initialized for project {config.project_id}, region {config.region}")
 
     async def get_recent_jobs(self, days: int = 7) -> List[SparkJob]:
-        """
-        Get recent Spark jobs from Dataproc
+        """Fetches recent Spark jobs from Dataproc.
+
+        This method retrieves a list of Spark jobs that have completed within
+        the specified number of days.
 
         Args:
-            days: Number of days to look back
+            days: The number of days to look back for recent jobs.
 
         Returns:
-            List of Spark jobs
+            A list of `SparkJob` objects representing the recent jobs.
+
+        Raises:
+            gcp_exceptions.GoogleAPICallError: If an error occurs while
+                communicating with the Dataproc API.
         """
         logger.info(f"Fetching jobs from the last {days} days")
 
@@ -103,15 +123,14 @@ class DataprocClient:
             raise
 
     async def get_jobs_by_time_range(self, start_time: datetime, end_time: datetime) -> List[SparkJob]:
-        """
-        Get jobs within a specific time range
+        """Fetches Spark jobs within a specific time range.
 
         Args:
-            start_time: Start of time range
-            end_time: End of time range
+            start_time: The start of the time range.
+            end_time: The end of the time range.
 
         Returns:
-            List of Spark jobs
+            A list of `SparkJob` objects that ran within the time range.
         """
         request = dataproc_v1.ListJobsRequest(
             parent=self.region_path,
@@ -129,14 +148,16 @@ class DataprocClient:
         return jobs
 
     async def get_job_metrics(self, job_id: str) -> List[JobMetrics]:
-        """
-        Get detailed metrics for a specific job
+        """Fetches detailed metrics for a specific job.
+
+        This method retrieves performance metrics for a given job ID, including
+        stage-level information and data from the Cloud Monitoring API.
 
         Args:
-            job_id: Job ID
+            job_id: The ID of the job to fetch metrics for.
 
         Returns:
-            List of job metrics
+            A list of `JobMetrics` objects, or an empty list if an error occurs.
         """
         try:
             # Get job details
@@ -162,14 +183,17 @@ class DataprocClient:
             return []
 
     async def get_cluster_info(self, cluster_name: str) -> ClusterInfo:
-        """
-        Get cluster information
+        """Fetches detailed information about a specific cluster.
 
         Args:
-            cluster_name: Name of the cluster
+            cluster_name: The name of the cluster to fetch information for.
 
         Returns:
-            Cluster information
+            A `ClusterInfo` object containing the cluster's details.
+
+        Raises:
+            gcp_exceptions.GoogleAPICallError: If the cluster is not found or
+                an API error occurs.
         """
         try:
             cluster_path = f"{self.region_path}/clusters/{cluster_name}"
@@ -195,18 +219,43 @@ class DataprocClient:
             raise
 
     async def _process_job_pages(self, page_result):
-        """Process job pages asynchronously"""
+        """Asynchronously processes pages of job results from the Dataproc API.
+
+        Args:
+            page_result: An iterator of job pages from the `list_jobs` call.
+
+        Yields:
+            Individual job objects from the pages.
+        """
         for page in page_result:
             yield page
 
     def _create_time_filter(self, start_time: datetime, end_time: datetime) -> str:
-        """Create time filter for job queries"""
+        """Creates a time-based filter string for Dataproc job queries.
+
+        Args:
+            start_time: The start of the time range.
+            end_time: The end of the time range.
+
+        Returns:
+            A filter string for the Dataproc API.
+        """
         start_str = start_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         end_str = end_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         return f"status.state = DONE AND createTime >= {start_str} AND createTime <= {end_str}"
 
     def _should_include_job(self, job) -> bool:
-        """Determine if a job should be included in analysis"""
+        """Determines whether a job should be included in the analysis.
+
+        This method filters out short-running jobs that are unlikely to be
+        relevant for performance analysis.
+
+        Args:
+            job: A Dataproc job object.
+
+        Returns:
+            `True` if the job should be included, `False` otherwise.
+        """
         # Filter out very short jobs or test jobs
         if hasattr(job, 'spark_job') and job.spark_job:
             if hasattr(job.spark_job, 'submission_time') and job.spark_job.submission_time:
@@ -217,7 +266,14 @@ class DataprocClient:
         return True
 
     def _calculate_job_duration(self, job) -> Optional[float]:
-        """Calculate job duration in seconds"""
+        """Calculates the duration of a job in seconds.
+
+        Args:
+            job: A Dataproc job object.
+
+        Returns:
+            The duration of the job in seconds, or `None` if it cannot be calculated.
+        """
         if not hasattr(job, 'spark_job') or not job.spark_job:
             return None
 
@@ -236,7 +292,14 @@ class DataprocClient:
         return None
 
     async def _convert_to_spark_job(self, job) -> SparkJob:
-        """Convert Dataproc job to SparkJob model"""
+        """Converts a Dataproc job object to a `SparkJob` data model.
+
+        Args:
+            job: A Dataproc job object from the API.
+
+        Returns:
+            A `SparkJob` object with the job's information.
+        """
         spark_job = job.spark_job if hasattr(job, 'spark_job') else None
 
         # Extract basic information
@@ -293,13 +356,33 @@ class DataprocClient:
         )
 
     async def _extract_stage_metrics(self, job) -> List[JobMetrics]:
-        """Extract stage metrics from job driver output"""
+        """Extracts stage-level metrics from the job's driver output.
+
+        Note: This is a placeholder for a more complex implementation that would
+        involve parsing Spark event logs or UI data.
+
+        Args:
+            job: A Dataproc job object.
+
+        Returns:
+            An empty list, as this functionality is not yet implemented.
+        """
         # This would typically involve parsing the Spark UI output
         # For now, return empty list - in production you'd implement this
         return []
 
     async def _get_monitoring_metrics(self, job_id: str) -> List[JobMetrics]:
-        """Get additional metrics from Cloud Monitoring API"""
+        """Fetches additional job metrics from the Cloud Monitoring API.
+
+        Note: This is a placeholder for a more complex implementation that
+        would query for specific Spark metrics.
+
+        Args:
+            job_id: The ID of the job to fetch monitoring metrics for.
+
+        Returns:
+            An empty list, as this functionality is not yet implemented.
+        """
         try:
             # Create monitoring query
             project_name = f"projects/{self.config.project_id}"
@@ -321,7 +404,12 @@ class DataprocClient:
             return []
 
     async def get_active_clusters(self) -> List[ClusterInfo]:
-        """Get list of active clusters"""
+        """Fetches a list of all active (running) Dataproc clusters.
+
+        Returns:
+            A list of `ClusterInfo` objects for all active clusters, or an
+            empty list if an error occurs.
+        """
         try:
             request = dataproc_v1.ListClustersRequest(
                 parent=self.region_path,
@@ -353,15 +441,17 @@ class DataprocClient:
             return []
 
     async def get_cluster_cost_estimate(self, cluster_name: str, days: int = 30) -> Optional[float]:
-        """
-        Get cost estimate for a cluster
+        """Estimates the cost of a cluster over a given number of days.
+
+        Note: This provides a simplified cost estimate based on machine types
+        and does not use the Cloud Billing API.
 
         Args:
-            cluster_name: Name of the cluster
-            days: Number of days to look back
+            cluster_name: The name of the cluster.
+            days: The number of days to estimate the cost for.
 
         Returns:
-            Estimated cost in USD
+            The estimated cost in USD, or `None` if an error occurs.
         """
         try:
             # This would typically involve querying Cloud Billing API
@@ -385,7 +475,17 @@ class DataprocClient:
             return None
 
     def _estimate_cluster_daily_cost(self, cluster_info: ClusterInfo) -> float:
-        """Estimate daily cost for a cluster"""
+        """Estimates the daily cost of a cluster based on its configuration.
+
+        This is a simplified calculation using example pricing and does not
+        reflect actual GCP costs.
+
+        Args:
+            cluster_info: A `ClusterInfo` object for the cluster.
+
+        Returns:
+            The estimated daily cost in USD.
+        """
         # This is a simplified calculation
         # In production, you'd use actual GCP pricing
 

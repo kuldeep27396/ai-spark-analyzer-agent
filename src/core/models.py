@@ -1,5 +1,9 @@
-"""
-Data models for AI Spark Analyzer
+"""Data models for the AI Spark Analyzer.
+
+This module defines the Pydantic data models used throughout the application
+to represent core entities such as Spark jobs, clusters, recommendations,
+and analysis reports. These models ensure data consistency and provide
+type validation.
 """
 
 from datetime import datetime
@@ -9,7 +13,7 @@ from pydantic import BaseModel, Field
 
 
 class JobStatus(str, Enum):
-    """Spark job status enumeration"""
+    """Enumeration for the status of a Spark job."""
     SUBMITTED = "SUBMITTED"
     RUNNING = "RUNNING"
     DONE = "DONE"
@@ -19,7 +23,7 @@ class JobStatus(str, Enum):
 
 
 class RecommendationType(str, Enum):
-    """Types of recommendations"""
+    """Enumeration for the types of recommendations the system can generate."""
     COST_OPTIMIZATION = "cost_optimization"
     PERFORMANCE_IMPROVEMENT = "performance_improvement"
     RESOURCE_ALLOCATION = "resource_allocation"
@@ -29,7 +33,7 @@ class RecommendationType(str, Enum):
 
 
 class SeverityLevel(str, Enum):
-    """Severity levels for recommendations and alerts"""
+    """Enumeration for severity levels used in recommendations and alerts."""
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -37,7 +41,38 @@ class SeverityLevel(str, Enum):
 
 
 class SparkJob(BaseModel):
-    """Spark job data model"""
+    """Represents a single Spark job and its associated metadata.
+
+    Attributes:
+        job_id: The unique identifier for the job.
+        application_id: The YARN or Spark application ID.
+        cluster_name: The name of the cluster where the job ran.
+        cluster_uuid: The unique identifier of the cluster.
+        job_name: The name of the Spark job.
+        status: The final status of the job.
+        submit_time: The time the job was submitted.
+        start_time: The time the job started execution.
+        finish_time: The time the job finished execution.
+        duration_seconds: The total duration of the job in seconds.
+        vcore_seconds: The aggregated vcore-seconds consumed by the job.
+        memory_milliseconds: The aggregated memory-milliseconds consumed.
+        bytes_read: The total bytes read by the job.
+        bytes_written: The total bytes written by the job.
+        records_read: The total records read by the job.
+        records_written: The total records written by the job.
+        spark_user: The user who submitted the job.
+        spark_version: The Spark version used.
+        queue: The YARN queue the job was submitted to.
+        num_tasks: The total number of tasks in the job.
+        num_active_tasks: The number of currently active tasks.
+        num_completed_tasks: The number of completed tasks.
+        num_failed_tasks: The number of failed tasks.
+        num_killed_tasks: The number of killed tasks.
+        job_tags: A dictionary of tags associated with the job.
+        properties: A dictionary of Spark properties for the job.
+        success_rate: The calculated success rate of tasks.
+        cost_estimate: The estimated cost of the job in USD.
+    """
 
     # Basic job information
     job_id: str
@@ -88,7 +123,36 @@ class SparkJob(BaseModel):
 
 
 class JobMetrics(BaseModel):
-    """Detailed job metrics"""
+    """Represents detailed, stage-level metrics for a Spark job.
+
+    Attributes:
+        stage_id: The ID of the Spark stage.
+        stage_attempt_id: The attempt ID of the stage.
+        stage_name: The name of the stage.
+        num_tasks: The number of tasks in the stage.
+        num_active_tasks: The number of active tasks in the stage.
+        num_completed_tasks: The number of completed tasks in the stage.
+        num_failed_tasks: The number of failed tasks in the stage.
+        num_killed_tasks: The number of killed tasks in the stage.
+        executor_run_time: The total executor runtime in milliseconds.
+        executor_cpu_time: The total executor CPU time in nanoseconds.
+        executor_deserialize_cpu_time: CPU time spent on deserialization.
+        executor_deserialize_time: Time spent on deserialization.
+        executor_runtime: The total executor runtime.
+        shuffle_read_bytes: Bytes read during shuffle operations.
+        shuffle_read_records: Records read during shuffle operations.
+        shuffle_write_bytes: Bytes written during shuffle operations.
+        shuffle_write_records: Records written during shuffle operations.
+        input_bytes: Bytes read from input sources.
+        input_records: Records read from input sources.
+        output_bytes: Bytes written to output sinks.
+        output_records: Records written to output sinks.
+        memory_bytes_spilled: Bytes spilled to memory.
+        disk_bytes_spilled: Bytes spilled to disk.
+        submission_time: The time the stage was submitted.
+        completion_time: The time the stage was completed.
+        stage_duration: The duration of the stage in seconds.
+    """
 
     # Stage metrics
     stage_id: int
@@ -135,7 +199,23 @@ class JobMetrics(BaseModel):
 
 
 class ClusterInfo(BaseModel):
-    """Dataproc cluster information"""
+    """Represents information about a Dataproc cluster.
+
+    Attributes:
+        cluster_name: The name of the cluster.
+        cluster_uuid: The unique identifier for the cluster.
+        project_id: The GCP project ID where the cluster resides.
+        region: The region of the cluster.
+        status: The current status of the cluster.
+        cluster_config: A dictionary containing the cluster's configuration.
+        num_workers: The number of primary worker nodes.
+        num_secondary_workers: The number of secondary (preemptible) worker nodes.
+        machine_type: The machine type of the primary workers.
+        secondary_machine_type: The machine type of the secondary workers.
+        creation_timestamp: The time the cluster was created.
+        deletion_timestamp: The time the cluster was deleted.
+        total_cost_estimate: The estimated total cost of the cluster.
+    """
 
     cluster_name: str
     cluster_uuid: str
@@ -164,7 +244,21 @@ class ClusterInfo(BaseModel):
 
 
 class Pattern(BaseModel):
-    """Performance or cost pattern identified by AI"""
+    """Represents a performance or cost pattern identified by the AI.
+
+    Attributes:
+        pattern_id: The unique identifier for the pattern.
+        pattern_type: The type of pattern (e.g., "data_skew", "inefficient_join").
+        description: A description of the pattern.
+        confidence_score: The AI's confidence in the identified pattern.
+        frequency: The number of times this pattern was observed.
+        job_ids: A list of job IDs where this pattern was found.
+        clusters: A list of clusters where this pattern was observed.
+        time_period: The time period over which the pattern was observed.
+        root_cause: The AI's analysis of the root cause.
+        impact_assessment: The AI's assessment of the pattern's impact.
+        created_at: The timestamp when the pattern was first identified.
+    """
 
     pattern_id: str
     pattern_type: str
@@ -190,7 +284,30 @@ class Pattern(BaseModel):
 
 
 class Recommendation(BaseModel):
-    """AI-generated optimization recommendation"""
+    """Represents an AI-generated optimization recommendation.
+
+    Attributes:
+        recommendation_id: The unique identifier for the recommendation.
+        type: The type of recommendation.
+        title: A short title for the recommendation.
+        description: A detailed description of the recommendation.
+        severity: The severity level of the issue being addressed.
+        estimated_cost_savings: The estimated cost savings in USD.
+        estimated_performance_improvement: The estimated performance improvement percentage.
+        implementation_difficulty: The estimated difficulty of implementation.
+        target_jobs: A list of job IDs this recommendation applies to.
+        target_clusters: A list of clusters this recommendation applies to.
+        target_users: A list of users this recommendation is relevant for.
+        implementation_steps: A list of steps to implement the recommendation.
+        code_changes: A dictionary of suggested code changes.
+        configuration_changes: A dictionary of suggested configuration changes.
+        reasoning: The AI's reasoning behind the recommendation.
+        confidence_score: The AI's confidence in the recommendation's effectiveness.
+        supporting_evidence: A list of evidence supporting the recommendation.
+        created_at: The timestamp when the recommendation was created.
+        expires_at: The timestamp when the recommendation expires.
+        status: The current status of the recommendation.
+    """
 
     recommendation_id: str
     type: RecommendationType
@@ -230,7 +347,21 @@ class Recommendation(BaseModel):
 
 
 class MemoryEntry(BaseModel):
-    """Long-term memory entry"""
+    """Represents an entry in the system's long-term memory.
+
+    Attributes:
+        entry_id: The unique identifier for the memory entry.
+        entry_type: The type of the memory entry (e.g., "job", "pattern").
+        content: The content of the memory entry.
+        context: Additional context associated with the entry.
+        importance_score: The importance score of the entry.
+        relevance_score: The relevance score of the entry for a given query.
+        access_count: The number of times the entry has been accessed.
+        last_accessed: The timestamp of the last access.
+        created_at: The timestamp when the entry was created.
+        updated_at: The timestamp when the entry was last updated.
+        embedding: The vector embedding for similarity searches.
+    """
 
     entry_id: str
     entry_type: str
@@ -257,7 +388,26 @@ class MemoryEntry(BaseModel):
 
 
 class OptimizationPlan(BaseModel):
-    """30-day optimization plan"""
+    """Represents a 30-day optimization plan.
+
+    Attributes:
+        plan_id: The unique identifier for the plan.
+        plan_name: The name of the optimization plan.
+        description: A description of the plan's goals.
+        period_start: The start date of the plan.
+        period_end: The end date of the plan.
+        total_recommendations: The total number of recommendations in the plan.
+        estimated_cost_savings: The total estimated cost savings from the plan.
+        estimated_performance_improvement: The total estimated performance improvement.
+        recommendations: A list of recommendations included in the plan.
+        phases: A list of implementation phases for the plan.
+        success_metrics: A dictionary of metrics to measure the plan's success.
+        risk_assessment: The AI's assessment of risks associated with the plan.
+        dependencies: A list of dependencies for the plan.
+        created_at: The timestamp when the plan was created.
+        last_updated: The timestamp when the plan was last updated.
+        status: The current status of the plan.
+    """
 
     plan_id: str
     plan_name: str
@@ -294,7 +444,25 @@ class OptimizationPlan(BaseModel):
 
 
 class AnalysisReport(BaseModel):
-    """Daily analysis report"""
+    """Represents a daily analysis report.
+
+    Attributes:
+        report_id: The unique identifier for the report.
+        report_date: The date the report was generated for.
+        analysis_period: The time period covered by the analysis.
+        total_jobs_analyzed: The total number of jobs analyzed.
+        successful_jobs: The number of successful jobs.
+        failed_jobs: The number of failed jobs.
+        total_cost_estimate: The total estimated cost of the analyzed jobs.
+        patterns_identified: A list of patterns identified in the report.
+        recommendations_generated: A list of recommendations generated.
+        average_job_duration: The average duration of jobs in the period.
+        resource_utilization_metrics: A dictionary of key resource utilization metrics.
+        anomalies: A list of anomalies detected during the analysis.
+        summary_insights: A high-level summary of the AI's insights.
+        key_opportunities: A list of key optimization opportunities.
+        created_at: The timestamp when the report was created.
+    """
 
     report_id: str
     report_date: datetime
@@ -330,7 +498,22 @@ class AnalysisReport(BaseModel):
 
 
 class Alert(BaseModel):
-    """System alert or notification"""
+    """Represents a system alert or notification.
+
+    Attributes:
+        alert_id: The unique identifier for the alert.
+        alert_type: The type of alert (e.g., "performance_degradation").
+        severity: The severity level of the alert.
+        title: A title for the alert.
+        message: The alert message.
+        target_jobs: A list of job IDs related to the alert.
+        target_clusters: A list of clusters related to the alert.
+        source: The system component that generated the alert.
+        category: The category of the alert (e.g., "cost", "performance").
+        resolved: A boolean indicating if the alert has been resolved.
+        resolved_at: The timestamp when the alert was resolved.
+        created_at: The timestamp when the alert was created.
+    """
 
     alert_id: str
     alert_type: str
